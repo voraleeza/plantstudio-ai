@@ -1,0 +1,690 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 AppleColorEmoji;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="en">\
+<head>\
+    <meta charset="UTF-8">\
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+    <meta name="apple-mobile-web-app-capable" content="yes">\
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\
+    <meta name="viewport" content="viewport-fit=cover">\
+    <title>PlantStudio AI - 8K Botanical Studio</title>\
+    <style>\
+        * \{\
+            box-sizing: border-box;\
+            -webkit-tap-highlight-color: transparent;\
+        \}\
+\
+        html,\
+        body \{\
+            margin: 0;\
+            padding: 0;\
+            width: 100%;\
+            min-height: 100%;\
+            background: #0b0b0b;\
+            color: #ffffff;\
+            font-family:\
+                -apple-system,\
+                BlinkMacSystemFont,\
+                "Segoe UI",\
+                Roboto,\
+                Helvetica,\
+                Arial,\
+                sans-serif;\
+        \}\
+\
+        body \{\
+            display: flex;\
+            flex-direction: column;\
+            align-items: center;\
+            min-height: 100vh;\
+            min-height: 100dvh;\
+        \}\
+\
+        button,\
+        input \{\
+            font: inherit;\
+        \}\
+\
+        button \{\
+            -webkit-appearance: none;\
+            appearance: none;\
+        \}\
+\
+        /* =====================================================\
+           HEADER\
+        ===================================================== */\
+\
+        header \{\
+            width: 100%;\
+            padding:\
+                max(18px, env(safe-area-inset-top))\
+                18px\
+                18px;\
+\
+            text-align: center;\
+\
+            background:\
+                linear-gradient(\
+                    180deg,\
+                    #171717 0%,\
+                    #111111 100%\
+                );\
+\
+            border-bottom: 1px solid #292929;\
+        \}\
+\
+        header h1 \{\
+            margin: 0;\
+            font-size: 1.55rem;\
+            font-weight: 750;\
+            letter-spacing: 0.5px;\
+            color: #4ade80;\
+        \}\
+\
+        header p \{\
+            margin: 6px 0 0;\
+            font-size: 0.74rem;\
+            color: #787878;\
+            letter-spacing: 0.15em;\
+            text-transform: uppercase;\
+        \}\
+\
+        /* =====================================================\
+           APP\
+        ===================================================== */\
+\
+        .main-container \{\
+            flex: 1;\
+\
+            width: 100%;\
+            max-width: 540px;\
+\
+            display: flex;\
+            flex-direction: column;\
+            align-items: center;\
+\
+            padding:\
+                20px\
+                18px\
+                max(30px, env(safe-area-inset-bottom));\
+\
+            gap: 15px;\
+        \}\
+\
+        /* =====================================================\
+           STUDIO CANVAS\
+        ===================================================== */\
+\
+        .studio-canvas-wrapper \{\
+            position: relative;\
+\
+            width: 100%;\
+            aspect-ratio: 4 / 5;\
+\
+            background: #000000;\
+\
+            border-radius: 18px;\
+            overflow: hidden;\
+\
+            display: flex;\
+            align-items: center;\
+            justify-content: center;\
+\
+            border: 1px solid #202020;\
+\
+            box-shadow:\
+                0 15px 50px rgba(0, 0, 0, 0.65);\
+        \}\
+\
+        #studioCanvas \{\
+            position: relative;\
+            z-index: 1;\
+\
+            display: block;\
+\
+            width: 100%;\
+            height: 100%;\
+\
+            object-fit: contain;\
+\
+            background: #000000;\
+        \}\
+\
+        /* =====================================================\
+           VIGNETTE PREVIEW\
+        ===================================================== */\
+\
+        .vignette-overlay \{\
+            position: absolute;\
+            inset: 0;\
+\
+            z-index: 2;\
+\
+            pointer-events: none;\
+\
+            background:\
+                radial-gradient(\
+                    ellipse at 50% 42%,\
+                    rgba(0, 0, 0, 0) 28%,\
+                    rgba(0, 0, 0, 0.03) 46%,\
+                    rgba(0, 0, 0, 0.18) 65%,\
+                    rgba(0, 0, 0, 0.52) 84%,\
+                    rgba(0, 0, 0, 0.78) 100%\
+                );\
+        \}\
+\
+        /* =====================================================\
+           PLACEHOLDER\
+        ===================================================== */\
+\
+        .placeholder-text \{\
+            padding: 30px;\
+\
+            text-align: center;\
+\
+            color: #686868;\
+\
+            font-size: 0.9rem;\
+            line-height: 1.55;\
+        \}\
+\
+        .placeholder-icon \{\
+            display: block;\
+\
+            margin-bottom: 12px;\
+\
+            font-size: 2rem;\
+\
+            filter: grayscale(0.2);\
+        \}\
+\
+        /* =====================================================\
+           LOADING\
+        ===================================================== */\
+\
+        .loading-screen \{\
+            position: absolute;\
+            inset: 0;\
+\
+            z-index: 20;\
+\
+            display: flex;\
+            flex-direction: column;\
+            align-items: center;\
+            justify-content: center;\
+\
+            gap: 15px;\
+\
+            padding: 25px;\
+\
+            text-align: center;\
+\
+            background:\
+                rgba(0, 0, 0, 0.88);\
+\
+            backdrop-filter: blur(8px);\
+            -webkit-backdrop-filter: blur(8px);\
+        \}\
+\
+        .spinner \{\
+            width: 42px;\
+            height: 42px;\
+\
+            border-radius: 50%;\
+\
+            border: 4px solid rgba(74, 222, 128, 0.12);\
+            border-top-color: #4ade80;\
+\
+            animation: spin 0.85s linear infinite;\
+        \}\
+\
+        @keyframes spin \{\
+            from \{\
+                transform: rotate(0deg);\
+            \}\
+\
+            to \{\
+                transform: rotate(360deg);\
+            \}\
+        \}\
+\
+        #loadingText \{\
+            color: #eaeaea;\
+\
+            font-size: 0.82rem;\
+            font-weight: 600;\
+\
+            letter-spacing: 0.03em;\
+        \}\
+\
+        #loadingSubText \{\
+            max-width: 290px;\
+\
+            color: #767676;\
+\
+            font-size: 0.7rem;\
+            line-height: 1.45;\
+        \}\
+\
+        /* =====================================================\
+           STATUS\
+        ===================================================== */\
+\
+        .status-bar \{\
+            width: 100%;\
+\
+            display: flex;\
+            justify-content: space-between;\
+            align-items: center;\
+\
+            margin-top: -3px;\
+            padding: 0 4px;\
+\
+            min-height: 20px;\
+        \}\
+\
+        .studio-status \{\
+            color: #707070;\
+            font-size: 0.68rem;\
+        \}\
+\
+        .quality-badge \{\
+            display: none;\
+\
+            padding: 5px 8px;\
+\
+            border-radius: 100px;\
+\
+            color: #91f5a7;\
+            background: rgba(74, 222, 128, 0.08);\
+\
+            border:\
+                1px solid\
+                rgba(74, 222, 128, 0.18);\
+\
+            font-size: 0.62rem;\
+            font-weight: 700;\
+\
+            letter-spacing: 0.07em;\
+        \}\
+\
+        .quality-badge.visible \{\
+            display: block;\
+        \}\
+\
+        /* =====================================================\
+           BUTTONS\
+        ===================================================== */\
+\
+        .btn \{\
+            width: 100%;\
+\
+            min-height: 54px;\
+\
+            padding: 14px 16px;\
+\
+            border: none;\
+            border-radius: 14px;\
+\
+            display: flex;\
+            justify-content: center;\
+            align-items: center;\
+\
+            gap: 9px;\
+\
+            cursor: pointer;\
+\
+            font-size: 0.96rem;\
+            font-weight: 700;\
+\
+            transition:\
+                transform 0.15s ease,\
+                opacity 0.15s ease,\
+                background-color 0.2s ease;\
+        \}\
+\
+        .btn:active \{\
+            transform: scale(0.985);\
+        \}\
+\
+        .btn-primary \{\
+            color: #020a04;\
+\
+            background:\
+                linear-gradient(\
+                    135deg,\
+                    #84f39e,\
+                    #4ade80\
+                );\
+\
+            box-shadow:\
+                0 8px 30px\
+                rgba(74, 222, 128, 0.10);\
+        \}\
+\
+        .btn-primary:active \{\
+            background:\
+                linear-gradient(\
+                    135deg,\
+                    #72e68c,\
+                    #38c96d\
+                );\
+        \}\
+\
+        .btn-secondary \{\
+            color: #ffffff;\
+\
+            background: #242424;\
+\
+            border: 1px solid #393939;\
+        \}\
+\
+        .btn-secondary:active \{\
+            background: #303030;\
+        \}\
+\
+        .btn:disabled \{\
+            color: #505050;\
+\
+            background: #1a1a1a;\
+\
+            border: 1px solid #242424;\
+\
+            cursor: not-allowed;\
+\
+            opacity: 0.7;\
+        \}\
+\
+        #fileInput \{\
+            display: none;\
+        \}\
+\
+        /* =====================================================\
+           PRIVACY NOTE\
+        ===================================================== */\
+\
+        .privacy-note \{\
+            margin: 4px 10px 0;\
+\
+            text-align: center;\
+\
+            color: #5d5d5d;\
+\
+            font-size: 0.67rem;\
+            line-height: 1.5;\
+        \}\
+\
+        /* =====================================================\
+           PLANT NAME MODAL\
+        ===================================================== */\
+\
+        .modal-backdrop \{\
+            position: fixed;\
+            inset: 0;\
+\
+            z-index: 100;\
+\
+            display: none;\
+\
+            align-items: flex-end;\
+            justify-content: center;\
+\
+            padding: 16px;\
+\
+            background: rgba(0, 0, 0, 0.78);\
+\
+            backdrop-filter: blur(10px);\
+            -webkit-backdrop-filter: blur(10px);\
+        \}\
+\
+        .modal-backdrop.visible \{\
+            display: flex;\
+        \}\
+\
+        .modal \{\
+            width: 100%;\
+            max-width: 520px;\
+\
+            padding: 22px;\
+\
+            border-radius: 22px;\
+\
+            color: #ffffff;\
+            background: #151515;\
+\
+            border: 1px solid #292929;\
+\
+            box-shadow:\
+                0 -15px 60px\
+                rgba(0, 0, 0, 0.55);\
+\
+            animation: slideUp 0.24s ease;\
+        \}\
+\
+        @keyframes slideUp \{\
+            from \{\
+                opacity: 0;\
+                transform: translateY(20px);\
+            \}\
+\
+            to \{\
+                opacity: 1;\
+                transform: translateY(0);\
+            \}\
+        \}\
+\
+        .modal h2 \{\
+            margin: 0 0 7px;\
+\
+            font-size: 1.25rem;\
+            font-weight: 750;\
+        \}\
+\
+        .modal p \{\
+            margin: 0 0 16px;\
+\
+            color: #858585;\
+\
+            font-size: 0.78rem;\
+            line-height: 1.45;\
+        \}\
+\
+        #plantNameInput \{\
+            width: 100%;\
+            height: 52px;\
+\
+            margin-bottom: 11px;\
+\
+            padding: 0 14px;\
+\
+            outline: none;\
+\
+            color: #ffffff;\
+            background: #0b0b0b;\
+\
+            border: 1px solid #333333;\
+            border-radius: 13px;\
+\
+            font-size: 0.9rem;\
+        \}\
+\
+        #plantNameInput:focus \{\
+            border-color: #4ade80;\
+\
+            box-shadow:\
+                0 0 0 3px\
+                rgba(74, 222, 128, 0.08);\
+        \}\
+\
+        .modal-buttons \{\
+            display: grid;\
+\
+            grid-template-columns: 0.75fr 1.25fr;\
+\
+            gap: 9px;\
+        \}\
+\
+        .modal-button \{\
+            min-height: 49px;\
+\
+            border: none;\
+            border-radius: 13px;\
+\
+            font-size: 0.84rem;\
+            font-weight: 700;\
+\
+            cursor: pointer;\
+        \}\
+\
+        .modal-cancel \{\
+            color: #c0c0c0;\
+            background: #282828;\
+        \}\
+\
+        .modal-save \{\
+            color: #000000;\
+            background: #ffffff;\
+        \}\
+\
+        /* =====================================================\
+           TOAST\
+        ===================================================== */\
+\
+        .toast \{\
+            position: fixed;\
+\
+            left: 50%;\
+            bottom:\
+                max(\
+                    24px,\
+                    calc(\
+                        env(safe-area-inset-bottom) +\
+                        18px\
+                    )\
+                );\
+\
+            z-index: 500;\
+\
+            width: calc(100% - 36px);\
+            max-width: 480px;\
+\
+            padding: 13px 15px;\
+\
+            border-radius: 13px;\
+\
+            color: #f1f1f1;\
+            background:\
+                rgba(31, 31, 31, 0.96);\
+\
+            border: 1px solid #3a3a3a;\
+\
+            text-align: center;\
+\
+            font-size: 0.74rem;\
+\
+            opacity: 0;\
+\
+            pointer-events: none;\
+\
+            transform:\
+                translate(-50%, 14px);\
+\
+            transition:\
+                opacity 0.2s ease,\
+                transform 0.2s ease;\
+        \}\
+\
+        .toast.visible \{\
+            opacity: 1;\
+\
+            transform:\
+                translate(-50%, 0);\
+        \}\
+\
+        .hidden \{\
+            display: none !important;\
+        \}\
+\
+        @media (min-width: 650px) \{\
+            .modal-backdrop \{\
+                align-items: center;\
+            \}\
+        \}\
+    </style>\
+</head>\
+<body>\
+    <header>\
+        <h1>PlantStudio AI</h1>\
+        <p>8K Botanical Studio</p>\
+    </header>\
+\
+    <main class="main-container">\
+        <div class="studio-canvas-wrapper" id="studioWrapper">\
+            <canvas id="studioCanvas"></canvas>\
+            <div class="vignette-overlay" id="vignette"></div>\
+            \
+            <div class="loading-screen hidden" id="loading">\
+                <div class="spinner"></div>\
+                <div id="loadingText">Preparing PlantStudio AI...</div>\
+                <div id="loadingSubText">Your first AI background removal may need to download the model.</div>\
+            </div>\
+\
+            <div class="placeholder-text hidden" id="placeholder">\
+                <span class="placeholder-icon">
+\f1 \uc0\u55356 \u57151 
+\f0 </span>\
+                No plant picture uploaded.<br><br>\
+                Tap below to snap or choose a photo.\
+            </div>\
+        </div>\
+\
+        <div class="status-bar">\
+            <span class="studio-status" id="studioStatus">Ready</span>\
+            <span class="quality-badge" id="qualityBadge">DSLR STUDIO</span>\
+        </div>\
+\
+        <input type="file" id="fileInput" accept="image/*">\
+        \
+        <button class="btn btn-primary" id="uploadBtn">\
+            
+\f1 \uc0\u55357 \u56568 
+\f0  Snap / Upload Plant\
+        </button>\
+\
+        <button class="btn btn-secondary" id="saveBtn" disabled>\
+            
+\f1 \uc0\u55357 \u56510 
+\f0  Save Studio Pic to Gallery\
+        </button>\
+\
+        <p class="privacy-note">\
+            Plant processing takes place on your device.<br>\
+            IMG.LY AI assets are downloaded when required.\
+        </p>\
+    </main>\
+\
+    <div class="modal-backdrop" id="nameModal">\
+        <div class="modal">\
+            <h2>Name your plant</h2>\
+            <p>This will be used to organise the finished studio photograph in the share sheet.</p>\
+            \
+            <input type="text" id="plantNameInput" placeholder="e.g., Monstera Deliciosa">\
+            \
+            <div class="modal-buttons">\
+                <button class="modal-button modal-cancel" id="cancelNameBtn">Cancel</button>\
+                <button class="modal-button modal-save" id="confirmNameBtn">Save & Share</button>\
+            </div>\
+        </div>\
+    </div>\
+\
+    <div class="toast" id="toast"></div>\
+\
+    <script src="script.js"></script>\
+</body>\
+</html>}
