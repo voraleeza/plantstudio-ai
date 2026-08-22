@@ -1,0 +1,42 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#111214"><title>PlantStudio AI</title></head><body style="margin:0;background:#111214;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"><div id="boot" style="min-height:100dvh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px"><div><div style="font-size:22px;font-weight:800">PlantStudio <span style="color:#66e981">AI</span></div><div style="margin-top:10px;color:#999;font-size:12px">Opening editor…</div></div></div><script>
+(async()=>{
+ try{
+  const r=await fetch('/index.html?plantstudio_source=1',{cache:'no-store'});
+  if(!r.ok) throw new Error('Could not load editor');
+  let h=await r.text();
+
+  // Do not let an external AI-module download block the whole editor on iPhone.
+  h=h.replace("import removeBackground from 'https://esm.sh/@imgly/background-removal@1.7.0?bundle';", `
+let __removeBackgroundFn=null;
+async function removeBackground(file,config){
+  if(!__removeBackgroundFn){
+    const urls=[
+      'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm',
+      'https://esm.sh/@imgly/background-removal@1.7.0?bundle'
+    ];
+    let lastErr;
+    for(const url of urls){
+      try{
+        const m=await import(url);
+        __removeBackgroundFn=m.default||m.removeBackground;
+        if(typeof __removeBackgroundFn==='function') break;
+      }catch(e){lastErr=e;}
+    }
+    if(typeof __removeBackgroundFn!=='function') throw lastErr||new Error('Local cutout engine could not load');
+  }
+  return __removeBackgroundFn(file,config);
+}
+`);
+
+  // Show each chosen photo immediately. AI cutout can finish afterwards.
+  h=h.replace("assets.push(a)}renderQueue();processQueue()","assets.push(a);addImageLayer(a)}renderQueue();processQueue()");
+  h=h.replace("a.state='Ready';addImageLayer(a);status.textContent=","a.state='Ready';renderStage();status.textContent=");
+
+  document.open();document.write(h);document.close();
+ }catch(e){
+  console.error(e);
+  document.getElementById('boot').innerHTML='<div><b>PlantStudio could not open.</b><div style="margin-top:8px;color:#aaa;font-size:12px">Refresh the page and try again.</div></div>';
+ }
+})();
+</script></body></html>
