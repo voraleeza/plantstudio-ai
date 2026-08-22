@@ -1,5 +1,5 @@
 export default async (request) => {
-  const apiKey = globalThis.Netlify?.env?.get?.("PHOTOROOM_API_KEY") || process?.env?.PHOTOROOM_API_KEY;
+  const apiKey = globalThis.Netlify?.env?.get?.("PHOTOROOM_API_KEY") || globalThis.process?.env?.PHOTOROOM_API_KEY;
 
   if (request.method === "GET") {
     return new Response(JSON.stringify({ ok: true, keyConfigured: Boolean(apiKey) }), {
