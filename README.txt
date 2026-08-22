@@ -15,3 +15,4 @@ After deploy, open the app. Near the Add Photos area you should see:
 
 If it instead says the function is unavailable, the issue is Netlify
 function deployment, not the image editor.
+Vercel deployment test
