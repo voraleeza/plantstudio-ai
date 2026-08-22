@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080808">
+<title>PlantStudio AI – PhotoRoom Cutout v10.1</title>
+<style>
+:root{--bg:#080808;--panel:#121212;--panel2:#191919;--line:#292929;--text:#fff;--muted:#858585;--green:#66e981}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{min-height:100vh;min-height:100dvh}button,input,select{font:inherit}button{border:0;cursor:pointer}
+header{position:sticky;top:0;z-index:50;background:rgba(8,8,8,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:max(13px,env(safe-area-inset-top)) 15px 12px}
+.head{max-width:780px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.brand h1{font-size:20px;margin:0;font-weight:850}.brand h1 span{color:var(--green)}.brand p{font-size:9px;color:#777;margin:4px 0 0;letter-spacing:.12em;text-transform:uppercase}
+.badge{font-size:9px;padding:7px 9px;border-radius:999px;border:1px solid #265635;background:#102216;color:#8df5a5}
+.app{max-width:780px;margin:auto;padding:14px 13px max(32px,env(safe-area-inset-bottom));display:grid;gap:12px}
+.card{background:linear-gradient(145deg,#151515,#101010);border:1px solid var(--line);border-radius:16px;padding:13px}
+.row{display:flex;gap:8px;align-items:center}.grow{flex:1}
+.btn{min-height:46px;border-radius:12px;padding:0 13px;font-weight:750}.btn-primary{background:linear-gradient(135deg,#8cf3a0,#55dd73);color:#041006}.btn-secondary{background:#202020;color:#eee;border:1px solid #333}.btn-ghost{background:#141414;color:#aaa;border:1px solid #2d2d2d}.btn:disabled{opacity:.4;cursor:not-allowed}
+#fileInput{display:none}.hint,.notice{font-size:10px;color:#797979;line-height:1.45;margin-top:8px}
+.queue{display:none;gap:7px;overflow-x:auto;padding-top:10px;scrollbar-width:none}.queue.active{display:flex}.thumb{flex:0 0 72px;width:72px;height:72px;border:2px solid transparent;border-radius:12px;overflow:hidden;background:#050505;position:relative;padding:0}.thumb.active{border-color:var(--green)}.thumb img{width:100%;height:100%;object-fit:cover}.thumb .state{position:absolute;left:3px;right:3px;bottom:3px;background:rgba(0,0,0,.75);font-size:7px;color:#ddd;padding:3px;border-radius:4px;text-align:center}
+.workspace{position:relative;background:#000;border:1px solid #242424;border-radius:18px;overflow:hidden;aspect-ratio:4/5;min-height:330px;display:flex;align-items:center;justify-content:center}
+#previewImage{
+  display:none;
+  width:86%;
+  height:86%;
+  max-width:86%;
+  max-height:86%;
+  object-fit:contain;
+  object-position:center;
+  margin:auto;
+  filter:none;
+}
+.empty{color:#666;text-align:center;font-size:12px;line-height:1.55;padding:34px}.empty b{display:block;color:#aaa;margin-bottom:5px}
+.loader{position:absolute;inset:0;z-index:10;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;flex-direction:column;gap:11px;text-align:center}.loader.active{display:flex}.spin{width:34px;height:34px;border:3px solid #2b2b2b;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}#loaderText{font-size:11px;color:#ddd;max-width:270px}
+.status{font-size:9px;color:#777;text-align:center;min-height:13px;margin-top:5px}
+.previewBtns{display:flex;justify-content:center;gap:7px;margin-top:7px}.previewBtns button{min-height:34px;font-size:9px}
+.section-title{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#ccc;margin:1px 0 10px}
+.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.preset{min-height:45px;border-radius:10px;background:#191919;color:#999;border:1px solid #292929;padding:5px;font-size:10px;font-weight:750}.preset.active{background:#19261c;border-color:#396244;color:#fff}.preset small{display:block;color:#6f6f6f;font-size:7px;margin-top:2px;font-weight:500}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}.tab{min-height:38px;border-radius:9px;background:#171717;border:1px solid #292929;color:#888;font-size:9px;font-weight:750}.tab.active{background:#202b22;color:#dcffe4;border-color:#375a3e}
+.panel{display:none}.panel.active{display:block}.control{display:grid;grid-template-columns:92px 1fr 35px;gap:8px;align-items:center;margin:10px 0}.control label{font-size:10px;color:#bbb}.control output{font-size:9px;color:#777;text-align:right}input[type=range]{width:100%;accent-color:var(--green)}
+.bgOptions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.bgOption{min-height:42px;border-radius:9px;border:1px solid #303030;background:#1a1a1a;color:#999;font-size:9px;font-weight:750}.bgOption.active{border-color:var(--green);color:#fff}.swatch{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:-2px;margin-right:4px;border:1px solid #666}.black{background:#000}.white{background:#fff}.gray{background:#777}.transparent{background:linear-gradient(45deg,#777 25%,#bbb 25%,#bbb 50%,#777 50%,#777 75%,#bbb 75%);background-size:5px 5px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.wide{grid-column:1/-1}
+.bulk{display:grid;grid-template-columns:1fr 1fr;gap:8px}.count{font-size:10px;color:#888;margin-bottom:8px}
+select{width:100%;height:37px;background:#181818;color:#fff;border:1px solid #333;border-radius:8px;padding:0 7px}
+details{margin-top:9px;border:1px solid #262626;border-radius:11px;background:#101010;padding:0 10px}summary{padding:11px 0;font-size:10px;color:#999}
+@media(min-width:700px){.app{grid-template-columns:1.1fr .9fr;align-items:start}.left{position:sticky;top:78px}.right{display:grid;gap:12px}.workspace{min-height:540px}}
+
+/* iPhone/mobile stability: prevent accidental desktop-scale layout */
+@media (max-width: 900px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  .app{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+    padding:12px 10px max(30px,env(safe-area-inset-bottom)) !important;
+  }
+  .left,.right{
+    width:100% !important;
+    max-width:100% !important;
+    position:static !important;
+  }
+  .right{margin-top:12px}
+  .workspace{
+    width:100% !important;
+    min-height:0 !important;
+    height:min(68vh,620px) !important;
+    aspect-ratio:auto !important;
+  }
+  #previewImage{
+    width:86% !important;
+    height:86% !important;
+    max-width:86% !important;
+    max-height:86% !important;
+    object-fit:contain !important;
+  }
+  .control{grid-template-columns:82px minmax(0,1fr) 32px}
+  input[type=range]{min-width:0;max-width:100%}
+}
+
+</style>
+</head>
+<body>
+<header><div class="head"><div class="brand"><h1>PlantStudio <span>AI</span></h1><p>Plant Photo Editor</p></div><div class="badge">PHOTOROOM CUTOUT</div></div></header>
+<main class="app">
+<section class="left">
+  <div class="card">
+    <div class="row"><button id="uploadBtn" class="btn btn-primary grow">📸 Add Photos</button><button id="clearBtn" class="btn btn-ghost">Clear</button></div>
+    <input id="fileInput" type="file" accept="image/*" multiple>
+    <div class="hint">Add one photo or a batch. PhotoRoom removes the background on Netlify; editing remains on your phone.</div>
+    <div id="apiStatus" class="status" style="text-align:left;margin-top:6px">Checking PhotoRoom connection…</div>
+    <div id="queue" class="queue"></div>
+  </div>
+  <div id="workspace" class="workspace">
+    <img id="previewImage" alt="Plant cutout preview">
+    <div id="empty" class="empty"><b>Add a plant photo</b>PhotoRoom will isolate the whole photographed subject — leaf, stems, hand and pot — with transparent edges.</div>
+    <div id="loader" class="loader"><div class="spin"></div><div id="loaderText">Preparing…</div></div>
+  </div>
+  <div id="status" class="status">Ready</div>
+  <div class="previewBtns"><button id="fitBtn" class="btn btn-ghost">Fit Preview</button><button id="fillBtn" class="btn btn-ghost">Fill Preview</button></div>
+</section>
+
+<section class="right">
+  <div class="card">
+    <div class="section-title">Quick Looks</div>
+    <div class="presets">
+      <button class="preset active" data-preset="original">Original<small>Cutout only</small></button>
+      <button class="preset" data-preset="sales">Sales<small>True to life</small></button>
+      <button class="preset" data-preset="collector">Collector<small>Rich & crisp</small></button>
+      <button class="preset" data-preset="velvet">Velvet<small>Dark hero</small></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" data-tab="light">Light</button><button class="tab" data-tab="colour">Colour</button><button class="tab" data-tab="detail">Detail</button><button class="tab" data-tab="background">Background</button>
+    </div>
+    <div class="panel active" id="panel-light">
+      <div class="control"><label>Exposure</label><input data-key="exposure" type="range" min="-50" max="50" value="0"><output>0</output></div>
+      <div class="control"><label>Brightness</label><input data-key="brightness" type="range" min="-50" max="50" value="0"><output>0</output></div>
+      <div class="control"><label>Contrast</label><input data-key="contrast" type="range" min="-50" max="80" value="0"><output>0</output></div>
+      <div class="control"><label>Highlights</label><input data-key="highlights" type="range" min="-100" max="50" value="0"><output>0</output></div>
+      <div class="control"><label>Shadows</label><input data-key="shadows" type="range" min="-60" max="80" value="0"><output>0</output></div>
+      <div class="control"><label>Black Point</label><input data-key="blackpoint" type="range" min="0" max="70" value="0"><output>0</output></div>
+    </div>
+    <div class="panel" id="panel-colour">
+      <div class="control"><label>Saturation</label><input data-key="saturation" type="range" min="-80" max="80" value="0"><output>0</output></div>
+      <div class="control"><label>Vibrance</label><input data-key="vibrance" type="range" min="-50" max="80" value="0"><output>0</output></div>
+      <div class="control"><label>Warmth</label><input data-key="warmth" type="range" min="-50" max="50" value="0"><output>0</output></div>
+      <div class="control"><label>Tint</label><input data-key="tint" type="range" min="-50" max="50" value="0"><output>0</output></div>
+    </div>
+    <div class="panel" id="panel-detail">
+      <div class="control"><label>Sharpness</label><input data-key="sharpness" type="range" min="0" max="100" value="10"><output>10</output></div>
+      <div class="control"><label>Clarity</label><input data-key="clarity" type="range" min="-30" max="80" value="6"><output>6</output></div>
+      <div class="control"><label>Texture</label><input data-key="texture" type="range" min="-30" max="80" value="4"><output>4</output></div>
+      <div class="control"><label>Vignette</label><input data-key="vignette" type="range" min="0" max="70" value="0"><output>0</output></div>
+      <div class="control"><label>Shadow</label><input data-key="shadow" type="range" min="0" max="80" value="12"><output>12</output></div>
+    </div>
+    <div class="panel" id="panel-background">
+      <div class="bgOptions">
+        <button class="bgOption active" data-bg="black"><span class="swatch black"></span>Black</button>
+        <button class="bgOption" data-bg="white"><span class="swatch white"></span>White</button>
+        <button class="bgOption" data-bg="gray"><span class="swatch gray"></span>Grey</button>
+        <button class="bgOption" data-bg="transparent"><span class="swatch transparent"></span>Clear</button>
+      </div>
+      <div class="notice">The cutout itself comes directly from PhotoRoom. PlantStudio does not shrink or tighten the PhotoRoom mask.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Save</div>
+    <div class="actions"><button id="resetBtn" class="btn btn-ghost">Reset Edit</button><button id="applyAllBtn" class="btn btn-secondary">Apply to All</button><button id="saveOneBtn" class="btn btn-primary wide" disabled>Save Current Photo</button></div>
+    <details><summary>Export quality</summary>
+      <div class="control"><label>Long Edge</label><select id="exportSize"><option value="source">PhotoRoom size</option><option value="4096">4K</option><option value="6144">6K</option><option value="7680">8K-class</option></select><output></output></div>
+      <div class="notice">8K-class enlarges the final canvas; it cannot invent optical detail that was not present in the source.</div>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Bulk</div>
+    <div id="bulkCount" class="count">No batch loaded.</div>
+    <div class="bulk"><button id="processAllBtn" class="btn btn-secondary" disabled>Remove BG for All</button><button id="shareAllBtn" class="btn btn-primary" disabled>Export / Share All</button></div>
+    <div class="notice">Bulk background removal runs two PhotoRoom requests at a time. Each successful live API removal may count as a PhotoRoom API call.</div>
+  </div>
+</section>
+</main>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const uploadBtn=$("#uploadBtn"),clearBtn=$("#clearBtn"),fileInput=$("#fileInput"),queue=$("#queue"),workspace=$("#workspace"),previewImage=$("#previewImage"),empty=$("#empty"),loader=$("#loader"),loaderText=$("#loaderText"),status=$("#status"),apiStatus=$("#apiStatus");
+const fitBtn=$("#fitBtn"),fillBtn=$("#fillBtn"),resetBtn=$("#resetBtn"),applyAllBtn=$("#applyAllBtn"),saveOneBtn=$("#saveOneBtn"),processAllBtn=$("#processAllBtn"),shareAllBtn=$("#shareAllBtn"),bulkCount=$("#bulkCount"),exportSize=$("#exportSize");
+let items=[],activeIndex=-1;
+const EXPORT_PIXEL_CAP=34_000_000;
+const defaults={exposure:0,brightness:0,contrast:0,highlights:0,shadows:0,blackpoint:0,saturation:0,vibrance:0,warmth:0,tint:0,sharpness:10,clarity:6,texture:4,vignette:0,shadow:12,background:"black",preset:"original"};
+const presets={
+ original:{...defaults},
+ sales:{...defaults,preset:"sales",brightness:2,contrast:8,highlights:-10,shadows:4,blackpoint:4,saturation:2,vibrance:7,sharpness:16,clarity:10,texture:7,shadow:10},
+ collector:{...defaults,preset:"collector",brightness:-3,contrast:18,highlights:-22,shadows:-2,blackpoint:13,saturation:4,vibrance:12,sharpness:22,clarity:20,texture:14,shadow:20},
+ velvet:{...defaults,preset:"velvet",brightness:-12,contrast:28,highlights:-34,shadows:-12,blackpoint:25,saturation:-3,vibrance:7,sharpness:20,clarity:22,texture:13,vignette:8,shadow:24}
+};
+
+uploadBtn.onclick=()=>{fileInput.value="";fileInput.click()};
+fileInput.onchange=e=>addFiles([...e.target.files]);
+clearBtn.onclick=clearAll;
+fitBtn.onclick=()=>{previewImage.style.maxWidth="86%";previewImage.style.maxHeight="86%"};
+fillBtn.onclick=()=>{previewImage.style.maxWidth="100%";previewImage.style.maxHeight="100%"};
+
+$$(".tab").forEach(b=>b.onclick=()=>{$$(".tab").forEach(x=>x.classList.toggle("active",x===b));$$(".panel").forEach(p=>p.classList.remove("active"));$("#panel-"+b.dataset.tab).classList.add("active")});
+$$(".preset").forEach(b=>b.onclick=()=>{if(activeIndex<0)return;const bg=items[activeIndex].edit.background;items[activeIndex].edit={...presets[b.dataset.preset],background:bg};syncControls();applyPreview()});
+$$(".bgOption").forEach(b=>b.onclick=()=>{if(activeIndex<0)return;items[activeIndex].edit.background=b.dataset.bg;syncControls();applyPreview()});
+$$('input[type="range"][data-key]').forEach(r=>r.oninput=()=>{if(activeIndex<0)return;items[activeIndex].edit[r.dataset.key]=Number(r.value);r.nextElementSibling.textContent=r.value;items[activeIndex].edit.preset="custom";$$(".preset").forEach(x=>x.classList.remove("active"));applyPreview()});
+resetBtn.onclick=()=>{if(activeIndex<0)return;items[activeIndex].edit={...defaults};syncControls();applyPreview()};
+applyAllBtn.onclick=()=>{if(activeIndex<0||items.length<2)return;const e={...items[activeIndex].edit};items.forEach((it,i)=>{if(i!==activeIndex)it.edit={...e}});showStatus(`Edit copied to ${items.length} photos.`)};
+processAllBtn.onclick=processAll;
+saveOneBtn.onclick=exportCurrent;
+shareAllBtn.onclick=exportAll;
+
+async function addFiles(files){
+ const valid=files.filter(f=>f.type.startsWith("image/"));
+ if(!valid.length)return;
+
+ const startIndex=items.length;
+
+ for(const f of valid){
+   const u=URL.createObjectURL(f);
+   items.push({
+     file:f,url:u,name:f.name,
+     cutoutBlob:null,cutoutURL:null,
+     processing:false,error:false,
+     edit:{...defaults}
+   });
+ }
+
+ renderQueue();
+ bulkCount.textContent=`${items.length} photo${items.length===1?"":"s"} loaded`;
+ processAllBtn.disabled=!items.length;
+ shareAllBtn.disabled=!items.length;
+
+ if(activeIndex<0)selectItem(startIndex);
+
+ // AUTO BACKGROUND REMOVAL:
+ // Single photo = process immediately.
+ // Batch = start up to two PhotoRoom jobs at once.
+ status.textContent=valid.length===1
+   ?"Sending photo to PhotoRoom…"
+   :`Starting PhotoRoom background removal for ${valid.length} photos…`;
+
+ const newIndexes=[];
+ for(let i=startIndex;i<items.length;i++)newIndexes.push(i);
+
+ async function worker(){
+   while(newIndexes.length){
+     const i=newIndexes.shift();
+     await removeBG(i,true);
+   }
+ }
+
+ const workerCount=Math.min(2,newIndexes.length);
+ const workers=[];
+ for(let w=0;w<workerCount;w++)workers.push(worker());
+ await Promise.all(workers);
+
+ if(items[activeIndex]?.cutoutBlob){
+   applyPreview();
+   status.textContent="Background removed with PhotoRoom";
+ }else{
+   status.textContent="PhotoRoom could not remove this background — see message above.";
+ }
+}
+function clearAll(){items.forEach(it=>{URL.revokeObjectURL(it.url);if(it.cutoutURL)URL.revokeObjectURL(it.cutoutURL)});items=[];activeIndex=-1;queue.innerHTML="";queue.classList.remove("active");previewImage.style.display="none";previewImage.src="";empty.style.display="block";saveOneBtn.disabled=true;processAllBtn.disabled=true;shareAllBtn.disabled=true;bulkCount.textContent="No batch loaded.";status.textContent="Ready"}
+function renderQueue(){queue.innerHTML="";queue.classList.toggle("active",items.length>0);items.forEach((it,i)=>{const b=document.createElement("button");b.className="thumb"+(i===activeIndex?" active":"");const img=document.createElement("img");img.src=it.cutoutURL||it.url;b.appendChild(img);const s=document.createElement("div");s.className="state";s.textContent=it.processing?"Removing…":it.cutoutBlob?"PhotoRoom":it.error?"Failed":"Original";b.appendChild(s);b.onclick=()=>selectItem(i);queue.appendChild(b)})}
+function selectItem(i){if(i<0||i>=items.length)return;activeIndex=i;renderQueue();syncControls();applyPreview();saveOneBtn.disabled=false}
+function syncControls(){if(activeIndex<0)return;const e=items[activeIndex].edit;$$('input[type="range"][data-key]').forEach(r=>{r.value=e[r.dataset.key];r.nextElementSibling.textContent=r.value});$$(".preset").forEach(b=>b.classList.toggle("active",b.dataset.preset===e.preset));$$(".bgOption").forEach(b=>b.classList.toggle("active",b.dataset.bg===e.background))}
+function workspaceBG(bg){workspace.style.background=bg==="white"?"#fff":bg==="gray"?"#777":bg==="transparent"?"repeating-conic-gradient(#777 0 25%,#bbb 0 50%) 50%/16px 16px":"#000"}
+function applyPreview(){if(activeIndex<0)return;const it=items[activeIndex],e=it.edit;previewImage.src=it.cutoutURL||it.url;previewImage.style.display="block";empty.style.display="none";workspaceBG(e.background);const br=Math.max(.1,1+(e.brightness+e.exposure*.65)/100),ct=Math.max(.1,1+e.contrast/100),sat=Math.max(0,1+e.saturation/100+e.vibrance/180),sep=Math.max(0,e.warmth)*.08;previewImage.style.filter=`brightness(${br}) contrast(${ct}) saturate(${sat}) sepia(${sep}%) drop-shadow(0 ${Math.round(e.shadow/8)}px ${Math.round(e.shadow/3)}px rgba(0,0,0,${Math.min(.75,e.shadow/100)}))`;status.textContent=it.cutoutBlob?"PhotoRoom cutout ready":"Original preview · background not removed yet"}
+
+async function prepareUploadBlob(file){
+ const bmp=await createImageBitmap(file);
+
+ // Netlify Functions have a much smaller request payload limit than PhotoRoom itself.
+ // Resize only the API copy; the user's original remains untouched in PlantStudio.
+ let max=2800;
+ let scale=Math.min(1,max/Math.max(bmp.width,bmp.height));
+ let w=Math.max(1,Math.round(bmp.width*scale));
+ let h=Math.max(1,Math.round(bmp.height*scale));
+
+ const c=document.createElement("canvas");
+ c.width=w;c.height=h;
+ const x=c.getContext("2d",{alpha:false});
+ x.imageSmoothingEnabled=true;
+ x.imageSmoothingQuality="high";
+ x.drawImage(bmp,0,0,w,h);
+ bmp.close();
+
+ // Compress iteratively so the request stays comfortably below Netlify's limit.
+ let quality=.90;
+ let blob=await canvasBlob(c,"image/jpeg",quality);
+
+ while(blob.size>4.5*1024*1024 && quality>.68){
+   quality-=.07;
+   blob=await canvasBlob(c,"image/jpeg",quality);
+ }
+
+ // If still large, resize one more time.
+ if(blob.size>4.5*1024*1024){
+   const bmp2=await createImageBitmap(blob);
+   const s=2200/Math.max(bmp2.width,bmp2.height);
+   const c2=document.createElement("canvas");
+   c2.width=Math.max(1,Math.round(bmp2.width*s));
+   c2.height=Math.max(1,Math.round(bmp2.height*s));
+   const y=c2.getContext("2d",{alpha:false});
+   y.imageSmoothingEnabled=true;y.imageSmoothingQuality="high";
+   y.drawImage(bmp2,0,0,c2.width,c2.height);
+   bmp2.close();
+   blob=await canvasBlob(c2,"image/jpeg",.84);
+ }
+
+ return blob;
+}
+async function removeBG(i,quiet=false){
+ const it=items[i];if(!it||it.cutoutBlob||it.processing)return;
+ it.processing=true;it.error=false;renderQueue();if(i===activeIndex)showLoader("PhotoRoom is removing the background…");
+ try{
+   const uploadBlob=await prepareUploadBlob(it.file);
+   const resp=await fetch("/.netlify/functions/remove-background",{method:"POST",headers:{"Content-Type":uploadBlob.type||"image/jpeg","X-File-Name":encodeURIComponent(it.name)},body:uploadBlob});
+   if(!resp.ok){
+     let msg=`PhotoRoom request failed (${resp.status})`;
+     try{
+       const j=await resp.json();
+       if(j.error)msg=j.error;
+     }catch{}
+     apiStatus.textContent="❌ "+msg;
+     apiStatus.style.color="#ff8d8d";
+     throw new Error(msg);
+   }
+   const blob=await resp.blob();
+   it.cutoutBlob=blob;
+   if(it.cutoutURL)URL.revokeObjectURL(it.cutoutURL);
+   it.cutoutURL=URL.createObjectURL(blob);
+   it.error=false;
+   apiStatus.textContent="✅ PhotoRoom connected";
+   apiStatus.style.color="#8df5a5";
+   if(i===activeIndex)applyPreview()
+ }catch(e){console.error(e);it.error=true;if(!quiet)showStatus(e.message||"Background removal failed.")}
+ finally{it.processing=false;renderQueue();if(i===activeIndex)hideLoader()}
+}
+async function processAll(){
+ const pending=items.map((it,i)=>it.cutoutBlob?null:i).filter(v=>v!==null);if(!pending.length){showStatus("All photos already have PhotoRoom cutouts.");return}
+ processAllBtn.disabled=true;let done=0;
+ async function worker(){while(pending.length){const i=pending.shift();await removeBG(i,true);done++;status.textContent=`PhotoRoom background removal ${done}/${done+pending.length}`}}
+ await Promise.all([worker(),worker()].slice(0,Math.min(2,pending.length+2)));processAllBtn.disabled=false;showStatus("Batch background removal complete.")
+}
+
+async function exportCurrent(){if(activeIndex<0)return;showLoader("Preparing finished photo…");try{if(!items[activeIndex].cutoutBlob)await removeBG(activeIndex,true);if(!items[activeIndex].cutoutBlob)throw new Error("No cutout available");const f=await renderExport(items[activeIndex]);hideLoader();await shareFiles([f])}catch(e){hideLoader();showStatus(e.message||"Export failed")}}
+async function exportAll(){if(!items.length)return;shareAllBtn.disabled=true;showLoader("Preparing batch…");try{const files=[];for(let i=0;i<items.length;i++){loaderText.textContent=`Preparing ${i+1} of ${items.length}…`;if(!items[i].cutoutBlob)await removeBG(i,true);if(items[i].cutoutBlob)files.push(await renderExport(items[i]))}hideLoader();if(files.length)await shareFiles(files)}catch(e){hideLoader();showStatus("Batch export stopped.")}finally{shareAllBtn.disabled=false}}
+
+async function renderExport(it){
+ const bmp=await createImageBitmap(it.cutoutBlob);let t;if(exportSize.value==="source")t={w:bmp.width,h:bmp.height};else t=fitUpscale(bmp.width,bmp.height,Number(exportSize.value),EXPORT_PIXEL_CAP);
+ const plant=document.createElement("canvas");plant.width=t.w;plant.height=t.h;const px=plant.getContext("2d",{alpha:true,willReadFrequently:true});px.imageSmoothingEnabled=true;px.imageSmoothingQuality="high";px.drawImage(bmp,0,0,t.w,t.h);bmp.close();
+ const c=document.createElement("canvas");c.width=t.w;c.height=t.h;const ctx=c.getContext("2d",{alpha:it.edit.background==="transparent",willReadFrequently:true});fillBG(ctx,c.width,c.height,it.edit.background);
+ const e=it.edit,br=Math.max(.1,1+(e.brightness+e.exposure*.65)/100),ct=Math.max(.1,1+e.contrast/100),sat=Math.max(0,1+e.saturation/100+e.vibrance/180),sep=Math.max(0,e.warmth)*.08;
+ ctx.save();ctx.filter=`brightness(${br}) contrast(${ct}) saturate(${sat}) sepia(${sep}%)`;if(e.shadow>0){ctx.shadowColor=`rgba(0,0,0,${Math.min(.8,e.shadow/100)})`;ctx.shadowBlur=Math.max(3,Math.round(Math.min(c.width,c.height)*e.shadow/6000));ctx.shadowOffsetY=Math.max(1,Math.round(Math.min(c.width,c.height)*e.shadow/15000))}ctx.drawImage(plant,0,0);ctx.restore();
+ if(anyPixel(e)){const id=ctx.getImageData(0,0,c.width,c.height),d=id.data,sg=e.shadows/100,hg=e.highlights/100,bp=e.blackpoint/100,w=e.warmth/100,ti=e.tint/100,v=e.vibrance/100;for(let p=0;p<d.length;p+=4){if(d[p+3]===0)continue;let r=d[p]/255,g=d[p+1]/255,b=d[p+2]/255,y=.2126*r+.7152*g+.0722*b,sm=(1-y)*(1-y)*sg*.42,hm=y*y*hg*.45;r+=sm+hm;g+=sm+hm;b+=sm+hm;if(bp>0){const cut=bp*.18;r=(r-cut)/(1-cut);g=(g-cut)/(1-cut);b=(b-cut)/(1-cut)}r+=w*.06;b-=w*.05;g+=ti*.025;r-=ti*.012;b-=ti*.012;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),sv=mx-mn,boost=v*(1-Math.min(1,sv*1.8))*.22,av=(r+g+b)/3;r+=(r-av)*boost;g+=(g-av)*boost;b+=(b-av)*boost;d[p]=clamp(r*255);d[p+1]=clamp(g*255);d[p+2]=clamp(b*255)}ctx.putImageData(id,0,0)}
+ if(e.sharpness>0||e.clarity>0||e.texture>0)unsharp(ctx,c.width,c.height,(e.sharpness*.55+e.clarity*.28+e.texture*.17)/100);if(e.vignette>0)vignette(ctx,c.width,c.height,e.vignette/100);
+ const type=e.background==="transparent"?"image/png":"image/jpeg",blob=await canvasBlob(c,type,type==="image/jpeg"?.96:undefined),base=it.name.replace(/\.[^.]+$/,"").replace(/[^\w-]+/g,"_");return new File([blob],`PlantStudio_${base}.${type==="image/png"?"png":"jpg"}`,{type})
+}
+function anyPixel(e){return e.highlights||e.shadows||e.blackpoint||e.warmth||e.tint||e.vibrance}
+function unsharp(ctx,w,h,a){a=Math.min(.7,Math.max(0,a));if(!a)return;const id=ctx.getImageData(0,0,w,h),s=id.data,o=new Uint8ClampedArray(s),st=w*4;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*st+x*4;if(s[i+3]===0)continue;for(let c=0;c<3;c++){const ce=s[i+c],bl=(s[i-4+c]+s[i+4+c]+s[i-st+c]+s[i+st+c])/4;o[i+c]=clamp(ce+(ce-bl)*a)}}id.data.set(o);ctx.putImageData(id,0,0)}
+function vignette(ctx,w,h,a){const r=Math.hypot(w,h)*.55,g=ctx.createRadialGradient(w*.5,h*.45,r*.28,w*.5,h*.45,r);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(.65,"rgba(0,0,0,0)");g.addColorStop(1,`rgba(0,0,0,${Math.min(.7,a*.7)})`);ctx.fillStyle=g;ctx.fillRect(0,0,w,h)}
+function fillBG(ctx,w,h,bg){if(bg==="transparent"){ctx.clearRect(0,0,w,h);return}ctx.fillStyle=bg==="white"?"#fff":bg==="gray"?"#777":"#000";ctx.fillRect(0,0,w,h)}
+function fitUpscale(w,h,longEdge,cap){let s=longEdge/Math.max(w,h),tw=Math.round(w*s),th=Math.round(h*s);if(tw*th>cap){s*=Math.sqrt(cap/(tw*th));tw=Math.round(w*s);th=Math.round(h*s)}return{w:Math.max(1,tw),h:Math.max(1,th)}}
+function clamp(v){return v<0?0:v>255?255:v}
+function canvasBlob(c,t,q){return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error("Export failed")),t,q))}
+async function shareFiles(files){if(navigator.share&&navigator.canShare&&navigator.canShare({files})){try{await navigator.share({files,title:"PlantStudio AI Photos",text:files.length>1?`${files.length} edited plant photos`:"Edited plant photo"});return}catch(e){if(e.name==="AbortError")return}}files.forEach((f,i)=>setTimeout(()=>{const u=URL.createObjectURL(f),a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)},i*400))}
+function showLoader(t){loaderText.textContent=t;loader.classList.add("active")}function hideLoader(){loader.classList.remove("active")}function showStatus(t){status.textContent=t;setTimeout(()=>{if(status.textContent===t)status.textContent="Ready"},3200)}
+
+async function checkPhotoRoomConnection(){
+ try{
+   const r=await fetch("/.netlify/functions/remove-background",{method:"GET",cache:"no-store"});
+   const j=await r.json().catch(()=>({}));
+   if(r.ok && j.ok){
+     apiStatus.textContent=j.keyConfigured
+       ?"✅ PhotoRoom function connected"
+       :"❌ Netlify function exists but PHOTOROOM_API_KEY is missing";
+     apiStatus.style.color=j.keyConfigured?"#8df5a5":"#ff8d8d";
+   }else{
+     apiStatus.textContent="❌ PhotoRoom function is not available on this deploy";
+     apiStatus.style.color="#ff8d8d";
+   }
+ }catch(e){
+   apiStatus.textContent="❌ PhotoRoom function is not deployed/accessible";
+   apiStatus.style.color="#ff8d8d";
+ }
+}
+checkPhotoRoomConnection();
+
+</script>
+</body>
+</html>
