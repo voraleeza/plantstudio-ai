@@ -1,5 +1,5 @@
 export default async (request) => {
-  const apiKey = process.env.PHOTOROOM_API_KEY;
+  const apiKey = globalThis.Netlify?.env?.get?.("PHOTOROOM_API_KEY") || process?.env?.PHOTOROOM_API_KEY;
 
   if (request.method === "GET") {
     return new Response(JSON.stringify({ ok: true, keyConfigured: Boolean(apiKey) }), {
@@ -28,11 +28,8 @@ export default async (request) => {
       return new Response(JSON.stringify({ error: "No image received." }), { status: 400, headers: { "content-type": "application/json" } });
     }
 
-    // PlantStudio v10.2 sends a small temporary JPEG specifically to avoid
-    // Netlify's buffered request limit. Reject unexpectedly large payloads with
-    // a useful message rather than forwarding them.
     if (imageBytes.byteLength > 3.5 * 1024 * 1024) {
-      return new Response(JSON.stringify({ error: "Temporary PhotoRoom upload is still too large. Please retry; PlantStudio should compress it below 3.5 MB." }), {
+      return new Response(JSON.stringify({ error: "Temporary PhotoRoom upload is still too large. Please retry with the latest PlantStudio build." }), {
         status: 413,
         headers: { "content-type": "application/json" },
       });
@@ -47,8 +44,6 @@ export default async (request) => {
     formData.append("image_file", new Blob([imageBytes], { type: inputType }), fileName);
     formData.append("format", "png");
     formData.append("channels", "rgba");
-    // HD keeps the transparent cutout detailed while avoiding an oversized PNG
-    // response that can itself trigger Netlify's 413/response-size limit.
     formData.append("size", "hd");
     formData.append("crop", "false");
 
