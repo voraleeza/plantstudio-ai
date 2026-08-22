@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/loader.html"
+    },
+    {
       "source": "/.netlify/functions/remove-background",
       "destination": "/api/remove-background"
     }
