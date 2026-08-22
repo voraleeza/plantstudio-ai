@@ -1,156 +1,37 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="theme-color" content="#111214" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#111214">
 <title>PlantStudio AI</title>
 <style>
-:root{--bg:#111214;--panel:#191a1d;--panel2:#222327;--line:#34363b;--text:#f8f8fa;--muted:#9b9da4;--accent:#6970ff;--green:#66e981}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100%;overscroll-behavior:none}button,input,select{font:inherit}button{color:inherit;border:0;background:none}body{padding-bottom:max(18px,env(safe-area-inset-bottom))}
-header{height:72px;padding:max(13px,env(safe-area-inset-top)) 18px 10px;display:flex;align-items:end;justify-content:space-between;border-bottom:1px solid #24262a;position:sticky;top:0;z-index:20;background:rgba(17,18,20,.96);backdrop-filter:blur(16px)}
-.brand b{font-size:22px}.brand b span{color:var(--green)}.brand small{display:block;color:#777;letter-spacing:.16em;font-size:8px;margin-top:3px}.pill{border:1px solid #30563b;background:#14251a;color:#91f5a8;border-radius:99px;padding:8px 12px;font-size:9px}
-.app{max-width:820px;margin:auto;padding:12px}.topbar{display:flex;gap:8px;margin-bottom:10px}.primary,.secondary,.tool{border-radius:14px;min-height:48px;padding:0 15px;font-weight:750}.primary{background:linear-gradient(135deg,#8df5a5,#58de75);color:#061008;flex:1}.secondary{background:#1d1e21;border:1px solid #34363a;color:#d4d4d8}.tool{background:#242529;border:1px solid #33353b;min-height:60px;font-size:12px}.tool b{display:block;font-size:22px;margin-bottom:4px}.status{font-size:10px;color:var(--muted);padding:0 3px 9px;min-height:20px}.queue{display:flex;gap:7px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.thumb{width:68px;height:68px;flex:0 0 68px;border-radius:12px;overflow:hidden;border:2px solid transparent;position:relative;background:#080808}.thumb.active{border-color:var(--green)}.thumb img{width:100%;height:100%;object-fit:cover}.thumb span{position:absolute;left:2px;right:2px;bottom:2px;background:#000b;padding:3px;border-radius:5px;text-align:center;font-size:7px}
-.canvasWrap{position:relative;background:#050505;border:1px solid #3b3d42;aspect-ratio:4/5;overflow:hidden;touch-action:none}.stage{position:absolute;inset:0;overflow:hidden}.stage.white{background:#fff}.stage.gray{background:#777}.stage.clear{background:linear-gradient(45deg,#444 25%,#777 25%,#777 50%,#444 50%,#444 75%,#777 75%);background-size:18px 18px}.stage.black{background:#000}.layer{position:absolute;left:50%;top:50%;transform-origin:center center;touch-action:none;user-select:none}.layer img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}.textLayer{display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;font-weight:700;line-height:1.05}.selected{outline:2px solid var(--accent);outline-offset:2px}.handle{display:none;position:absolute;width:24px;height:24px;border-radius:50%;background:var(--accent);right:-13px;bottom:-13px;border:3px solid #fff}.selected .handle{display:block}.empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:#74777d;padding:40px;font-size:13px;line-height:1.55}.empty b{color:#bbb;display:block;margin-bottom:5px}.loader{position:absolute;inset:0;background:#000d;z-index:15;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}.loader.on{display:flex}.spin{width:36px;height:36px;border-radius:50%;border:3px solid #333;border-top-color:var(--green);animation:s .75s linear infinite}@keyframes s{to{transform:rotate(1turn)}}.loaderText{font-size:11px;color:#ddd;text-align:center;max-width:280px}.progress{width:210px;height:5px;background:#27282d;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;width:0;background:var(--green)}
-.bottomTools{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.save{width:100%;background:var(--accent);border-radius:18px;min-height:56px;font-weight:800;font-size:17px;margin-top:12px}.objectSheet{display:none;background:#18191c;border:1px solid #303238;border-radius:18px;padding:12px;margin-top:10px}.objectSheet.on{display:block}.objectTitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.objectTitle strong{font-size:15px}.sheetGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.smallBtn{background:#25262a;border:1px solid #33353a;border-radius:14px;min-height:70px;font-size:11px}.smallBtn b{font-size:23px;display:block;margin-bottom:5px}.sliderRow{display:grid;grid-template-columns:75px 1fr 34px;gap:8px;align-items:center;margin:12px 0;font-size:10px;color:#b9bbc0}.sliderRow input{width:100%;accent-color:var(--accent)}.backgrounds{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.bgBtn{min-height:42px;border:1px solid #35373c;border-radius:10px;background:#222327;font-size:10px}.bgBtn.active{border-color:var(--accent)}
-/* refine */
-.refine{position:fixed;inset:0;background:#111214;z-index:100;display:none;flex-direction:column}.refine.on{display:flex}.refineTop{height:78px;padding:max(16px,env(safe-area-inset-top)) 18px 10px;display:flex;align-items:end;justify-content:space-between}.circle{width:48px;height:48px;border-radius:50%;background:#1c1d21;border:1px solid #34363b;font-size:25px}.doneCircle{background:var(--accent)}.refineCanvasWrap{flex:1;min-height:0;background:#eaeaea;position:relative;overflow:hidden;touch-action:none}.refineCanvas{width:100%;height:100%;display:block;touch-action:none}.refinePanel{background:#242529;border-radius:28px 28px 0 0;padding:12px 16px max(18px,env(safe-area-inset-bottom));border-top:1px solid #3b3d42}.segTabs{display:grid;grid-template-columns:1fr 1fr;background:#34353a;border-radius:14px;padding:3px}.segTab{height:42px;border-radius:11px;color:#ddd}.segTab.active{background:#5a5b61;color:#fff}.eraseRestore{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.modeBtn{min-height:82px;border-radius:18px;background:#1a1b1e;border:1px solid #383a40;font-size:13px}.modeBtn b{font-size:27px;display:block}.modeBtn.active{outline:2px solid var(--accent)}.refineHint{text-align:center;color:#aaa;font-size:10px;margin-top:10px}.manualControls{display:none}.manualControls.on{display:block}.manualControls .sliderRow{margin:10px 0 0}
-.modal{position:fixed;inset:0;background:#000b;z-index:120;display:none;align-items:center;justify-content:center;padding:20px}.modal.on{display:flex}.modalCard{width:min(420px,100%);background:#202125;border:1px solid #3a3c42;border-radius:20px;padding:18px}.modalCard h3{margin:0 0 12px}.modalCard input,.modalCard select{width:100%;height:46px;border-radius:12px;border:1px solid #3c3e44;background:#121316;color:#fff;padding:0 12px;margin-bottom:10px}.modalActions{display:flex;gap:8px}.modalActions button{flex:1}
-@media(min-width:760px){.app{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.right{margin-top:0}.bottomTools{grid-template-columns:repeat(2,1fr)}.save{margin-top:10px}}
+:root{--bg:#111214;--text:#f8f8fa;--muted:#9b9da4;--green:#66e981}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{padding-bottom:max(20px,env(safe-area-inset-bottom))}
+header{padding:max(18px,env(safe-area-inset-top)) 18px 14px;border-bottom:1px solid #25262a;display:flex;justify-content:space-between;align-items:end}.brand b{font-size:23px}.brand span{color:var(--green)}.brand small{display:block;color:#777;font-size:8px;letter-spacing:.15em;margin-top:4px}.pill{font-size:9px;border:1px solid #30563b;background:#14251a;color:#91f5a8;border-radius:99px;padding:8px 11px}.app{max-width:760px;margin:auto;padding:14px}.bar{display:flex;gap:9px}.add,.clear{min-height:54px;border-radius:14px;border:0;font:inherit;font-weight:800}.add{flex:1;background:linear-gradient(135deg,#8df5a5,#58de75);color:#061008}.clear{padding:0 18px;background:#1d1e21;border:1px solid #34363a;color:#ddd}.status{font-size:11px;color:var(--muted);padding:10px 2px}.queue{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px}.thumb{width:70px;height:70px;flex:0 0 70px;border-radius:12px;overflow:hidden;border:1px solid #333;background:#050505}.thumb img{width:100%;height:100%;object-fit:cover}.canvas{position:relative;aspect-ratio:4/5;background:#000;border:1px solid #3a3c42;border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center}.canvas img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;display:none}.empty{text-align:center;color:#73767d;padding:34px;line-height:1.5}.empty b{display:block;color:#bbb;margin-bottom:5px}.note{margin-top:12px;padding:12px;border:1px solid #292b30;background:#17181b;border-radius:13px;color:#8e9097;font-size:10px;line-height:1.45}
 </style>
 </head>
 <body>
-<header><div class="brand"><b>PlantStudio <span>AI</span></b><small>LOCAL PLANT PHOTO EDITOR</small></div><div class="pill">FREE LOCAL CUTOUT</div></header>
-<div class="app">
-<section class="left">
-  <div class="topbar"><button id="addPhotos" class="primary">📸 Add Photos</button><button id="clear" class="secondary">Clear</button></div>
-  <input id="photoInput" type="file" accept="image/*" multiple hidden>
-  <div id="status" class="status">Cutout runs on your device. First use downloads the free AI model, then it is cached.</div>
-  <div id="queue" class="queue"></div>
-  <div class="canvasWrap" id="canvasWrap">
-    <div id="stage" class="stage black"></div>
-    <div id="empty" class="empty"><div><b>Add a plant photo</b>Background removal starts automatically. Your original subject pixels are preserved.</div></div>
-    <div id="loader" class="loader"><div class="spin"></div><div id="loaderText" class="loaderText">Loading local cutout model…</div><div class="progress"><i id="progressBar"></i></div></div>
-  </div>
-  <div id="objectSheet" class="objectSheet">
-    <div class="objectTitle"><strong id="objectName">Object</strong><button id="doneObject" class="secondary" style="min-height:38px">Done</button></div>
-    <div class="sheetGrid">
-      <button id="replaceBtn" class="smallBtn"><b>↕</b>Replace</button>
-      <button id="refineBtn" class="smallBtn"><b>✂︎</b>Edit Cutout</button>
-      <button id="deleteBtn" class="smallBtn"><b>⌫</b>Delete</button>
-    </div>
-    <div class="sliderRow"><span>Size</span><input id="sizeRange" type="range" min="20" max="220" value="100"><output id="sizeOut">100</output></div>
-    <div class="sliderRow"><span>Rotate</span><input id="rotateRange" type="range" min="-180" max="180" value="0"><output id="rotateOut">0</output></div>
-    <div class="sliderRow"><span>Opacity</span><input id="opacityRange" type="range" min="10" max="100" value="100"><output id="opacityOut">100</output></div>
-  </div>
-</section>
-<section class="right">
-  <div class="bottomTools">
-    <button id="layersBtn" class="tool"><b>▱</b>Layers</button>
-    <button id="insertBtn" class="tool"><b>＋</b>Insert</button>
-    <button id="textBtn" class="tool"><b>Aa</b>Text</button>
-    <button id="bgBtn" class="tool"><b>▧</b>Backgrounds</button>
-    <button id="duplicateBtn" class="tool"><b>⧉</b>Duplicate</button>
-    <button id="resizeCanvasBtn" class="tool"><b>⌗</b>Resize</button>
-  </div>
-  <div id="backgroundPanel" class="objectSheet">
-    <div class="objectTitle"><strong>Background</strong></div>
-    <div class="backgrounds"><button class="bgBtn active" data-bg="black">Black</button><button class="bgBtn" data-bg="white">White</button><button class="bgBtn" data-bg="gray">Grey</button><button class="bgBtn" data-bg="clear">Clear</button></div>
-  </div>
-  <button id="saveBtn" class="save">⇩ Save</button>
-</section>
-</div>
-
-<div id="refine" class="refine">
- <div class="refineTop"><button id="closeRefine" class="circle">×</button><div style="display:flex;gap:8px"><button id="undoMask" class="circle">↶</button><button id="redoMask" class="circle">↷</button><button id="applyRefine" class="circle doneCircle">✓</button></div></div>
- <div id="refineCanvasWrap" class="refineCanvasWrap"><canvas id="refineCanvas" class="refineCanvas"></canvas></div>
- <div class="refinePanel">
-   <div class="segTabs"><button class="segTab active" data-seg="assisted">Assisted</button><button class="segTab" data-seg="manual">Manual</button></div>
-   <div class="eraseRestore"><button class="modeBtn active" data-maskmode="erase"><b>⊖</b>Erase</button><button class="modeBtn" data-maskmode="restore"><b>⊕</b>Restore</button></div>
-   <div class="manualControls" id="manualControls"><div class="sliderRow"><span>Brush</span><input id="brushSize" type="range" min="6" max="160" value="48"><output id="brushOut">48</output></div><div class="sliderRow"><span>Softness</span><input id="softness" type="range" min="0" max="100" value="35"><output id="softOut">35</output></div></div>
-   <div id="refineHint" class="refineHint">Tap or make a short stroke on an unwanted area. Assisted mode expands to the connected region.</div>
- </div>
-</div>
-
-<div id="textModal" class="modal"><div class="modalCard"><h3>Add text</h3><input id="textValue" placeholder="Type text"><input id="textColor" type="color" value="#ffffff"><div class="modalActions"><button class="secondary" data-close="textModal">Cancel</button><button id="addTextConfirm" class="primary">Add</button></div></div></div>
-<div id="resizeModal" class="modal"><div class="modalCard"><h3>Resize canvas</h3><select id="canvasPreset"><option value="1080,1350">Portrait 4:5</option><option value="1080,1080">Square 1:1</option><option value="1080,1920">Story 9:16</option><option value="1600,1200">Landscape 4:3</option><option value="1200,1600">Portrait 3:4</option></select><div class="modalActions"><button class="secondary" data-close="resizeModal">Cancel</button><button id="resizeConfirm" class="primary">Apply</button></div></div></div>
-
-<script type="module">
-import removeBackground from 'https://esm.sh/@imgly/background-removal@1.7.0?bundle';
-
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const stage=$('#stage'), empty=$('#empty'), loader=$('#loader'), loaderText=$('#loaderText'), progressBar=$('#progressBar'), status=$('#status'), queue=$('#queue');
-const photoInput=$('#photoInput');
-let assets=[], layers=[], selected=null, processing=false, bg='black', canvasW=1080, canvasH=1350;
-let drag=null, pinch=null;
-const aiConfig={model:'small',device:'cpu',proxyToWorker:true,output:{format:'image/png',quality:1},progress:(key,current,total)=>{loaderText.textContent='Downloading local cutout model…';progressBar.style.width=Math.round(current/Math.max(1,total)*100)+'%'}};
-
-function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
-function blobURL(b){return URL.createObjectURL(b)}
-async function imageFrom(src){return await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src})}
-async function fileToAsset(file){const originalURL=blobURL(file);const originalImg=await imageFrom(originalURL);return {id:uid(),name:file.name,file,originalURL,originalImg,cutoutURL:null,mask:null,mw:0,mh:0,state:'Queued'}}
-
-$('#addPhotos').onclick=()=>photoInput.click(); $('#insertBtn').onclick=()=>photoInput.click();
-photoInput.onchange=async()=>{const files=[...photoInput.files];photoInput.value='';for(const f of files){if(!f.type.startsWith('image/'))continue;const a=await fileToAsset(f);assets.push(a)}renderQueue();processQueue()};
-
-async function processQueue(){if(processing)return;processing=true;for(const a of assets){if(a.cutoutURL||a.state==='Processing')continue;a.state='Processing';renderQueue();loader.classList.add('on');progressBar.style.width='0';loaderText.textContent='Removing background locally…';try{const out=await removeBackground(a.file,aiConfig);a.cutoutURL=blobURL(out);const ci=await imageFrom(a.cutoutURL);const c=document.createElement('canvas');c.width=ci.naturalWidth;c.height=ci.naturalHeight;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(ci,0,0);const d=x.getImageData(0,0,c.width,c.height);a.mask=new Uint8ClampedArray(c.width*c.height);for(let p=0,j=3;p<a.mask.length;p++,j+=4)a.mask[p]=d.data[j];a.mw=c.width;a.mh=c.height;a.state='Ready';addImageLayer(a);status.textContent='Local cutout ready — tap the object for Edit Cutout.'}catch(e){console.error(e);a.state='Failed';status.textContent='Local cutout failed on this device. Try a smaller photo.'}renderQueue()}loader.classList.remove('on');processing=false}
-
-function addImageLayer(asset){const l={id:uid(),type:'image',assetId:asset.id,name:asset.name,x:.5,y:.5,w:.64,h:.64,scale:1,rot:0,opacity:1,z:layers.length};layers.push(l);selectLayer(l.id);renderStage()}
-function addTextLayer(text,color){const l={id:uid(),type:'text',text,color,name:'Text',x:.5,y:.5,w:.5,h:.15,scale:1,rot:0,opacity:1,z:layers.length,fontSize:72};layers.push(l);selectLayer(l.id);renderStage()}
-function getAsset(id){return assets.find(a=>a.id===id)} function getLayer(id){return layers.find(l=>l.id===id)}
-function renderQueue(){queue.innerHTML='';assets.forEach(a=>{const b=document.createElement('button');b.className='thumb'+(selected&&getLayer(selected)?.assetId===a.id?' active':'');b.innerHTML=`<img src="${a.cutoutURL||a.originalURL}"><span>${a.state}</span>`;b.onclick=()=>{const l=layers.find(x=>x.assetId===a.id);if(l)selectLayer(l.id)};queue.appendChild(b)})}
-function renderStage(){stage.className='stage '+bg;stage.innerHTML='';empty.style.display=layers.length?'none':'flex';layers.sort((a,b)=>a.z-b.z).forEach(l=>{const el=document.createElement('div');el.className='layer '+(l.id===selected?'selected':'')+(l.type==='text'?' textLayer':'');el.dataset.id=l.id;el.style.width=(l.w*100)+'%';el.style.height=(l.h*100)+'%';el.style.left=(l.x*100)+'%';el.style.top=(l.y*100)+'%';el.style.opacity=l.opacity;el.style.transform=`translate(-50%,-50%) scale(${l.scale}) rotate(${l.rot}deg)`;if(l.type==='image'){const a=getAsset(l.assetId);el.innerHTML=`<img src="${a?.cutoutURL||a?.originalURL||''}"><i class="handle"></i>`}else{el.textContent=l.text;el.style.color=l.color;el.style.fontSize=`clamp(18px,${l.fontSize/18}vw,72px)`;el.innerHTML+=`<i class="handle"></i>`}el.addEventListener('pointerdown',layerPointerDown);stage.appendChild(el)});syncSheet();renderQueue()}
-function selectLayer(id){selected=id;renderStage()}
-function syncSheet(){const l=getLayer(selected);$('#objectSheet').classList.toggle('on',!!l);if(!l)return;$('#objectName').textContent=l.name||'Object';$('#sizeRange').value=Math.round(l.scale*100);$('#sizeOut').textContent=Math.round(l.scale*100);$('#rotateRange').value=l.rot;$('#rotateOut').textContent=l.rot;$('#opacityRange').value=Math.round(l.opacity*100);$('#opacityOut').textContent=Math.round(l.opacity*100)}
-function layerPointerDown(e){e.preventDefault();const el=e.currentTarget,l=getLayer(el.dataset.id);selectLayer(l.id);el.setPointerCapture(e.pointerId);drag={id:l.id,pid:e.pointerId,sx:e.clientX,sy:e.clientY,ox:l.x,oy:l.y,handle:e.target.classList.contains('handle'),os:l.scale};el.addEventListener('pointermove',layerPointerMove);el.addEventListener('pointerup',layerPointerUp,{once:true})}
-function layerPointerMove(e){if(!drag||e.pointerId!==drag.pid)return;const l=getLayer(drag.id),r=stage.getBoundingClientRect();if(drag.handle){const d=Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy);const sign=(e.clientX-drag.sx)+(e.clientY-drag.sy)>=0?1:-1;l.scale=Math.max(.2,Math.min(2.5,drag.os+sign*d/260))}else{l.x=Math.max(-.3,Math.min(1.3,drag.ox+(e.clientX-drag.sx)/r.width));l.y=Math.max(-.3,Math.min(1.3,drag.oy+(e.clientY-drag.sy)/r.height))}renderStage()}
-function layerPointerUp(e){e.currentTarget.removeEventListener('pointermove',layerPointerMove);drag=null}
-
-$('#doneObject').onclick=()=>{selected=null;renderStage()};
-$('#deleteBtn').onclick=()=>{if(!selected)return;layers=layers.filter(x=>x.id!==selected);selected=null;renderStage()};
-$('#duplicateBtn').onclick=()=>{const l=getLayer(selected);if(!l)return;const n={...l,id:uid(),x:l.x+.04,y:l.y+.04,z:layers.length,name:(l.name||'Object')+' copy'};layers.push(n);selectLayer(n.id)};
-$('#sizeRange').oninput=e=>{const l=getLayer(selected);if(l){l.scale=e.target.value/100;$('#sizeOut').textContent=e.target.value;renderStage()}};
-$('#rotateRange').oninput=e=>{const l=getLayer(selected);if(l){l.rot=+e.target.value;$('#rotateOut').textContent=e.target.value;renderStage()}};
-$('#opacityRange').oninput=e=>{const l=getLayer(selected);if(l){l.opacity=e.target.value/100;$('#opacityOut').textContent=e.target.value;renderStage()}};
-$('#replaceBtn').onclick=()=>photoInput.click();
-$('#layersBtn').onclick=()=>{if(!layers.length)return;const ordered=[...layers].sort((a,b)=>b.z-a.z);const names=ordered.map((l,i)=>`${i+1}. ${l.name}`).join('\n');const pick=prompt('Layers\n'+names+'\n\nEnter layer number to select:');const idx=+pick-1;if(ordered[idx])selectLayer(ordered[idx].id)};
-
-$('#textBtn').onclick=()=>$('#textModal').classList.add('on');
-$$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.remove('on'));
-$('#addTextConfirm').onclick=()=>{const t=$('#textValue').value.trim();if(t){addTextLayer(t,$('#textColor').value);$('#textValue').value=''}$('#textModal').classList.remove('on')};
-$('#resizeCanvasBtn').onclick=()=>$('#resizeModal').classList.add('on');
-$('#resizeConfirm').onclick=()=>{[canvasW,canvasH]=$('#canvasPreset').value.split(',').map(Number);$('.canvasWrap').style.aspectRatio=`${canvasW}/${canvasH}`;$('#resizeModal').classList.remove('on')};
-$('#bgBtn').onclick=()=>$('#backgroundPanel').classList.toggle('on');$$('.bgBtn').forEach(b=>b.onclick=()=>{bg=b.dataset.bg;$$('.bgBtn').forEach(x=>x.classList.toggle('active',x===b));renderStage()});
-$('#clear').onclick=()=>{assets.forEach(a=>{try{URL.revokeObjectURL(a.originalURL);URL.revokeObjectURL(a.cutoutURL)}catch{}});assets=[];layers=[];selected=null;renderStage();renderQueue()};
-
-/* refine mask editor */
-let refineLayer=null, workMask=null, maskHistory=[], maskRedo=[], segMode='assisted', maskMode='erase', drawing=false,lastPt=null;
-const refine=$('#refine'), rc=$('#refineCanvas'), rctx=rc.getContext('2d',{willReadFrequently:true});
-$('#refineBtn').onclick=openRefine; $('#closeRefine').onclick=()=>refine.classList.remove('on'); $('#applyRefine').onclick=applyRefine;
-$$('.segTab').forEach(b=>b.onclick=()=>{segMode=b.dataset.seg;$$('.segTab').forEach(x=>x.classList.toggle('active',x===b));$('#manualControls').classList.toggle('on',segMode==='manual');$('#refineHint').textContent=segMode==='assisted'?'Tap or make a short stroke. The selection expands to the connected area.':'Paint precisely over the edge. Erase hides pixels; Restore brings original pixels back.'});
-$$('.modeBtn').forEach(b=>b.onclick=()=>{maskMode=b.dataset.maskmode;$$('.modeBtn').forEach(x=>x.classList.toggle('active',x===b))});
-$('#brushSize').oninput=e=>$('#brushOut').textContent=e.target.value;$('#softness').oninput=e=>$('#softOut').textContent=e.target.value;
-function snapshotMask(){if(!workMask)return;maskHistory.push(workMask.slice());if(maskHistory.length>8)maskHistory.shift();maskRedo=[]}
-$('#undoMask').onclick=()=>{if(!maskHistory.length)return;maskRedo.push(workMask.slice());workMask=maskHistory.pop();drawRefine()};$('#redoMask').onclick=()=>{if(!maskRedo.length)return;maskHistory.push(workMask.slice());workMask=maskRedo.pop();drawRefine()};
-async function openRefine(){const l=getLayer(selected);if(!l||l.type!=='image')return;const a=getAsset(l.assetId);if(!a?.mask)return;refineLayer=l;workMask=a.mask.slice();maskHistory=[];maskRedo=[];refine.classList.add('on');resizeRefineCanvas();drawRefine()}
-function resizeRefineCanvas(){const w=$('#refineCanvasWrap').clientWidth,h=$('#refineCanvasWrap').clientHeight,d=devicePixelRatio||1;rc.width=Math.round(w*d);rc.height=Math.round(h*d);rc.style.width=w+'px';rc.style.height=h+'px';rctx.setTransform(d,0,0,d,0,0)}
-window.addEventListener('resize',()=>{if(refine.classList.contains('on')){resizeRefineCanvas();drawRefine()}});
-function refineTransform(a){const W=$('#refineCanvasWrap').clientWidth,H=$('#refineCanvasWrap').clientHeight,iw=a.originalImg.naturalWidth,ih=a.originalImg.naturalHeight,s=Math.min(W/iw,H/ih);return {s,x:(W-iw*s)/2,y:(H-ih*s)/2,iw,ih,W,H}}
-function drawRefine(){if(!refineLayer)return;const a=getAsset(refineLayer.assetId),t=refineTransform(a);rctx.clearRect(0,0,t.W,t.H);rctx.fillStyle='#e9e9e9';rctx.fillRect(0,0,t.W,t.H);rctx.globalAlpha=.17;rctx.drawImage(a.originalImg,t.x,t.y,t.iw*t.s,t.ih*t.s);rctx.globalAlpha=1;const mc=document.createElement('canvas');mc.width=a.mw;mc.height=a.mh;const mx=mc.getContext('2d');const im=mx.createImageData(a.mw,a.mh);for(let p=0,j=0;p<workMask.length;p++,j+=4){im.data[j]=255;im.data[j+1]=255;im.data[j+2]=255;im.data[j+3]=workMask[p]}mx.putImageData(im,0,0);const oc=document.createElement('canvas');oc.width=a.mw;oc.height=a.mh;const ox=oc.getContext('2d');ox.drawImage(a.originalImg,0,0,a.mw,a.mh);ox.globalCompositeOperation='destination-in';ox.drawImage(mc,0,0);rctx.drawImage(oc,t.x,t.y,t.iw*t.s,t.ih*t.s);rctx.strokeStyle='#4388ff';rctx.lineWidth=2;rctx.strokeRect(t.x,t.y,t.iw*t.s,t.ih*t.s)}
-function eventToMask(e,a){const r=rc.getBoundingClientRect(),t=refineTransform(a),x=(e.clientX-r.left-t.x)/t.s,y=(e.clientY-r.top-t.y)/t.s;return {x:Math.round(x/a.originalImg.naturalWidth*a.mw),y:Math.round(y/a.originalImg.naturalHeight*a.mh)}}
-rc.addEventListener('pointerdown',e=>{if(!refineLayer)return;const a=getAsset(refineLayer.assetId),p=eventToMask(e,a);if(p.x<0||p.y<0||p.x>=a.mw||p.y>=a.mh)return;snapshotMask();if(segMode==='assisted'){assistedFill(a,p.x,p.y,maskMode==='restore');drawRefine()}else{drawing=true;lastPt=p;paintMask(a,p.x,p.y);rc.setPointerCapture(e.pointerId);drawRefine()}});
-rc.addEventListener('pointermove',e=>{if(!drawing||segMode!=='manual')return;const a=getAsset(refineLayer.assetId),p=eventToMask(e,a);paintLine(a,lastPt,p);lastPt=p;drawRefine()});rc.addEventListener('pointerup',()=>{drawing=false;lastPt=null});
-function paintMask(a,x,y){const rad=+$('#brushSize').value/2*(a.mw/900),soft=+$('#softness').value/100;for(let yy=Math.max(0,Math.floor(y-rad));yy<Math.min(a.mh,Math.ceil(y+rad));yy++)for(let xx=Math.max(0,Math.floor(x-rad));xx<Math.min(a.mw,Math.ceil(x+rad));xx++){const d=Math.hypot(xx-x,yy-y);if(d>rad)continue;const k=soft?Math.min(1,(rad-d)/(rad*Math.max(.08,soft))):1;const idx=yy*a.mw+xx,target=maskMode==='restore'?255:0;workMask[idx]=Math.round(workMask[idx]+(target-workMask[idx])*k)}}
-function paintLine(a,p1,p2){const d=Math.hypot(p2.x-p1.x,p2.y-p1.y),steps=Math.max(1,Math.ceil(d/4));for(let i=0;i<=steps;i++)paintMask(a,p1.x+(p2.x-p1.x)*i/steps,p1.y+(p2.y-p1.y)*i/steps)}
-function assistedFill(a,sx,sy,restore){const c=document.createElement('canvas');c.width=a.mw;c.height=a.mh;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(a.originalImg,0,0,a.mw,a.mh);const d=x.getImageData(0,0,a.mw,a.mh).data,si=(sy*a.mw+sx)*4,sr=d[si],sg=d[si+1],sb=d[si+2];const tol=52,seen=new Uint8Array(a.mw*a.mh),q=[[sx,sy]];let head=0,count=0,max=Math.min(a.mw*a.mh,420000);while(head<q.length&&count<max){const [px,py]=q[head++],idx=py*a.mw+px;if(px<0||py<0||px>=a.mw||py>=a.mh||seen[idx])continue;seen[idx]=1;const j=idx*4,dist=Math.abs(d[j]-sr)+Math.abs(d[j+1]-sg)+Math.abs(d[j+2]-sb);if(dist>tol*3)continue;workMask[idx]=restore?255:0;count++;q.push([px+1,py],[px-1,py],[px,py+1],[px,py-1])}}
-async function applyRefine(){if(!refineLayer)return;const a=getAsset(refineLayer.assetId);a.mask=workMask.slice();const c=document.createElement('canvas');c.width=a.mw;c.height=a.mh;const x=c.getContext('2d');x.drawImage(a.originalImg,0,0,a.mw,a.mh);const d=x.getImageData(0,0,a.mw,a.mh);for(let p=0,j=3;p<a.mask.length;p++,j+=4)d.data[j]=a.mask[p];x.putImageData(d,0,0);const b=await new Promise(res=>c.toBlob(res,'image/png'));if(a.cutoutURL)URL.revokeObjectURL(a.cutoutURL);a.cutoutURL=blobURL(b);refine.classList.remove('on');renderStage()}
-
-/* export */
-$('#saveBtn').onclick=async()=>{if(!layers.length)return;loader.classList.add('on');loaderText.textContent='Rendering finished image…';progressBar.style.width='100%';try{const c=document.createElement('canvas');c.width=canvasW;c.height=canvasH;const x=c.getContext('2d');if(bg==='black'){x.fillStyle='#000';x.fillRect(0,0,c.width,c.height)}else if(bg==='white'){x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height)}else if(bg==='gray'){x.fillStyle='#777';x.fillRect(0,0,c.width,c.height)}for(const l of [...layers].sort((a,b)=>a.z-b.z)){x.save();x.globalAlpha=l.opacity;x.translate(l.x*c.width,l.y*c.height);x.rotate(l.rot*Math.PI/180);x.scale(l.scale,l.scale);if(l.type==='image'){const a=getAsset(l.assetId),im=await imageFrom(a.cutoutURL||a.originalURL),w=l.w*c.width,h=l.h*c.height;x.drawImage(im,-w/2,-h/2,w,h)}else{x.fillStyle=l.color;x.textAlign='center';x.textBaseline='middle';x.font=`700 ${Math.round(l.fontSize*c.width/1080)}px -apple-system,Arial`;x.fillText(l.text,0,0,l.w*c.width)}x.restore()}const blob=await new Promise(res=>c.toBlob(res,'image/png',1));const file=new File([blob],`PlantStudio-${Date.now()}.png`,{type:'image/png'});if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'PlantStudio AI'})}else{const u=blobURL(blob),a=document.createElement('a');a.href=u;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}}catch(e){console.error(e);status.textContent='Could not save this image.'}loader.classList.remove('on')};
-
-renderStage();
+<header><div class="brand"><b>PlantStudio <span>AI</span></b><small>PLANT PHOTO EDITOR</small></div><div class="pill">UPLOAD TEST</div></header>
+<main class="app">
+<div class="bar"><button id="addBtn" class="add" type="button">📸 Add Photos</button><button id="clearBtn" class="clear" type="button">Clear</button></div>
+<input id="fileInput" type="file" accept="image/*" multiple style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+<div id="status" class="status">Tap Add Photos. The selected image should appear immediately.</div>
+<div id="queue" class="queue"></div>
+<div class="canvas"><img id="preview" alt="Selected photo"><div id="empty" class="empty"><b>No photo selected</b>This build is testing only the iPhone photo picker and preview.</div></div>
+<div class="note">No AI or background-removal code runs in this build. This isolates the upload problem completely.</div>
+</main>
+<script>
+(function(){
+'use strict';
+var addBtn=document.getElementById('addBtn'),clearBtn=document.getElementById('clearBtn'),input=document.getElementById('fileInput'),preview=document.getElementById('preview'),empty=document.getElementById('empty'),status=document.getElementById('status'),queue=document.getElementById('queue'),urls=[];
+function openPicker(){status.textContent='Opening photo library…';try{input.click()}catch(e){status.textContent='Could not open photo picker: '+e.message}}
+addBtn.addEventListener('click',openPicker,false);
+input.addEventListener('change',function(){var files=Array.prototype.slice.call(input.files||[]);if(!files.length){status.textContent='No photo selected.';return}queue.innerHTML='';urls.forEach(function(u){try{URL.revokeObjectURL(u)}catch(e){}});urls=[];files.forEach(function(file,index){if(!file.type||file.type.indexOf('image/')!==0)return;var u=URL.createObjectURL(file);urls.push(u);var box=document.createElement('button');box.type='button';box.className='thumb';var im=document.createElement('img');im.src=u;box.appendChild(im);box.addEventListener('click',function(){preview.src=u;preview.style.display='block';empty.style.display='none'});queue.appendChild(box);if(index===0){preview.src=u;preview.style.display='block';empty.style.display='none'}});status.textContent=files.length+' photo'+(files.length===1?'':'s')+' added successfully.';input.value=''},false);
+clearBtn.addEventListener('click',function(){preview.removeAttribute('src');preview.style.display='none';empty.style.display='block';queue.innerHTML='';urls.forEach(function(u){try{URL.revokeObjectURL(u)}catch(e){}});urls=[];status.textContent='Cleared. Tap Add Photos.'});
+})();
 </script>
 </body>
 </html>
