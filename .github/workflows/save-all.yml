@@ -31,13 +31,6 @@ jobs:
           if old not in s: raise SystemExit('save button target missing')
           s=s.replace(old,new,1)
 
-          marker="document.addEventListener('DOMContentLoaded',()=>{"
-          if marker not in s:
-              marker="})();\n</script>"
-              inject_before_end=True
-          else:
-              inject_before_end=False
-
           js=r'''
 async function exportCompBlob(compId){
   var c=document.createElement('canvas');c.width=canvasW;c.height=canvasH;var ctx=c.getContext('2d');
@@ -68,7 +61,6 @@ async function saveAllBatch(){
   finally{activeComp=oldComp;selected=oldSel;buildStage();btn.disabled=false;btn.textContent=oldText}
 }
 '''
-          # Insert helper functions immediately before the existing IIFE closes.
           endmark='})();\n</script>'
           if endmark not in s: raise SystemExit('script end target missing')
           s=s.replace(endmark,js+"\n$('#saveAllBtn').onclick=saveAllBatch;\n})();\n</script>",1)
@@ -81,3 +73,5 @@ async function saveAllBatch(){
           git add index.html
           git commit -m "Add Save All for separate batch photos" || exit 0
           git push origin main
+
+# rerun 2
