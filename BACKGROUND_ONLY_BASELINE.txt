@@ -1,0 +1,1 @@
+PlantStudio AI background-removal-only baseline restored from clean cutout commit 1630e4b3557757ee34855f8ccf38d8ff2fb3068f.
