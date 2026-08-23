@@ -1,0 +1,83 @@
+name: Add Save All for batch compositions
+
+on:
+  push:
+    paths:
+      - '.github/workflows/save-all.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Patch Save All
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('SEPARATE BATCH EDITOR','BATCH SAVE EDITOR',1)
+
+          old='<button id="saveBtn" class="save">⇩ Save / Share</button>'
+          new='<button id="saveBtn" class="save">⇩ Save / Share</button><button id="saveAllBtn" class="save" style="background:#2f9d58">⇩ Save All Batch Photos</button>'
+          if old not in s: raise SystemExit('save button target missing')
+          s=s.replace(old,new,1)
+
+          marker="document.addEventListener('DOMContentLoaded',()=>{"
+          if marker not in s:
+              marker="})();\n</script>"
+              inject_before_end=True
+          else:
+              inject_before_end=False
+
+          js=r'''
+async function exportCompBlob(compId){
+  var c=document.createElement('canvas');c.width=canvasW;c.height=canvasH;var ctx=c.getContext('2d');
+  if(bg!=='clear'){ctx.fillStyle=bg==='white'?'#fff':bg==='gray'?'#777':'#000';ctx.fillRect(0,0,c.width,c.height)}
+  var ls=layers.filter(l=>l.compId===compId).slice().sort((a,b)=>a.z-b.z);
+  for(var l of ls){
+    ctx.save();ctx.globalAlpha=l.opacity==null?1:l.opacity;var cx=l.x*c.width,cy=l.y*c.height;ctx.translate(cx,cy);ctx.rotate((l.rot||0)*Math.PI/180);
+    if(l.shadow){ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=Math.max(0,l.shadow/2);ctx.shadowOffsetY=Math.max(0,l.shadow/4)}
+    if(l.type==='image'){
+      var a=asset(l.assetId);if(a){try{var im=await imgFrom(a.cutoutURL||a.originalURL);var bw=l.w*c.width*(l.scale||1),bh=l.h*c.height*(l.scale||1),ar=im.naturalWidth/im.naturalHeight,dw=bw,dh=bw/ar;if(dh>bh){dh=bh;dw=bh*ar}ctx.filter=filterFor(l);ctx.drawImage(im,-dw/2,-dh/2,dw,dh);ctx.filter='none'}catch(e){console.error('export image failed',e)}}
+    }else if(l.type==='text'){
+      ctx.fillStyle=l.color||'#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 '+Math.max(18,l.fontSize||72)+'px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';var maxW=l.w*c.width*(l.scale||1);ctx.fillText(l.text||'',0,0,maxW)
+    }
+    ctx.restore();
+  }
+  return await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Export failed')),'image/png',1));
+}
+async function saveAllBatch(){
+  var btn=document.querySelector('#saveAllBtn');if(!btn)return;var roots=assets.filter(a=>a.isRoot&&a.cutoutURL);
+  if(!roots.length){status.textContent='No finished batch photos to save yet.';return}
+  var oldText=btn.textContent;btn.disabled=true;var oldComp=activeComp,oldSel=selected;
+  try{
+    var files=[];for(var i=0;i<roots.length;i++){var a=roots[i];status.textContent='Preparing '+(i+1)+' of '+roots.length+' for Save All…';var blob=await exportCompBlob(a.compId);var base=(a.name||('PlantStudio-'+(i+1))).replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/gi,'-');files.push(new File([blob],base+'-edited.png',{type:'image/png'}));await new Promise(r=>setTimeout(r,80))}
+    status.textContent=files.length+' photos ready to save.';
+    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:files}))){await navigator.share({files:files,title:'PlantStudio AI batch export'});status.textContent=files.length+' photos sent to Share / Save.'}
+    else{for(var f of files){var u=URL.createObjectURL(f),a=document.createElement('a');a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);await new Promise(r=>setTimeout(r,250))}status.textContent='Save All downloads started.'}
+  }catch(e){console.error(e);if(e&&e.name==='AbortError')status.textContent='Save All cancelled.';else status.textContent='Save All failed: '+(e?.message||e)}
+  finally{activeComp=oldComp;selected=oldSel;buildStage();btn.disabled=false;btn.textContent=oldText}
+}
+'''
+          # Insert helper functions immediately before the existing IIFE closes.
+          endmark='})();\n</script>'
+          if endmark not in s: raise SystemExit('script end target missing')
+          s=s.replace(endmark,js+"\n$('#saveAllBtn').onclick=saveAllBatch;\n})();\n</script>",1)
+          p.write_text(s)
+          PY
+      - name: Commit Save All
+        run: |
+          git config user.name "PlantStudio Fix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add Save All for separate batch photos" || exit 0
+          git push origin main
