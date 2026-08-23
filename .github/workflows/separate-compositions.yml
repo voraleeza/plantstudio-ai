@@ -1,0 +1,82 @@
+name: Separate batch photos into compositions
+
+on:
+  push:
+    paths:
+      - '.github/workflows/separate-compositions.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Patch separate batch compositions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('BULK SAFE EDITOR','SEPARATE BATCH EDITOR',1)
+
+          old="var assets=[],layers=[],selected=null,pending=[],queueRunning=false,generation=0,removeBackgroundFn=null,loadingAI=null,bg='black',canvasW=1080,canvasH=1350,pointers=new Map(),gesture=null;"
+          new="var assets=[],layers=[],selected=null,activeComp=null,pending=[],queueRunning=false,generation=0,removeBackgroundFn=null,loadingAI=null,bg='black',canvasW=1080,canvasH=1350,pointers=new Map(),gesture=null;"
+          if old not in s: raise SystemExit('globals target missing')
+          s=s.replace(old,new,1)
+
+          old="function makeLayer(a){var l={id:uid(),type:'image',assetId:a.id,name:a.name,x:.5,y:.5,w:.68,h:.68,scale:1,rot:0,opacity:1,shadow:0,z:layers.length,adjust:defaults(),locked:false};layers.push(l);selected=l.id;return l}"
+          new="function makeLayer(a,compId){var l={id:uid(),type:'image',assetId:a.id,compId:compId||a.compId,name:a.name,x:.5,y:.5,w:.68,h:.68,scale:1,rot:0,opacity:1,shadow:0,z:layers.filter(x=>x.compId===(compId||a.compId)).length,adjust:defaults(),locked:false};layers.push(l);selected=l.id;return l}"
+          if old not in s: raise SystemExit('makeLayer target missing')
+          s=s.replace(old,new,1)
+
+          old="function addText(t,c){var l={id:uid(),type:'text',name:'Text',text:t,color:c,x:.5,y:.5,w:.55,h:.15,scale:1,rot:0,opacity:1,shadow:0,z:layers.length,fontSize:72,locked:false};layers.push(l);selected=l.id;buildStage()}"
+          new="function addText(t,c){if(!activeComp)return;var l={id:uid(),type:'text',compId:activeComp,name:'Text',text:t,color:c,x:.5,y:.5,w:.55,h:.15,scale:1,rot:0,opacity:1,shadow:0,z:layers.filter(x=>x.compId===activeComp).length,fontSize:72,locked:false};layers.push(l);selected=l.id;buildStage()}"
+          if old not in s: raise SystemExit('addText target missing')
+          s=s.replace(old,new,1)
+
+          start=s.index('function renderQueue(){')
+          end=s.index('function elFor(l){',start)
+          newrq="function renderQueue(){queue.innerHTML='';assets.filter(a=>a.isRoot).forEach(a=>{var b=document.createElement('button');b.className='thumb'+(activeComp===a.compId?' active':'');var im=document.createElement('img');im.src=a.cutoutURL||a.originalURL;var sm=document.createElement('small');sm.textContent=a.state;b.append(im,sm);b.onclick=()=>{activeComp=a.compId;var l=layers.find(x=>x.assetId===a.id&&x.compId===activeComp);if(l){l.locked=false;selected=l.id}else selected=null;buildStage();status.textContent='Separate photo selected. Use Insert Photo only if you want a collage.'};queue.appendChild(b)})}"
+          s=s[:start]+newrq+s[end:]
+
+          old="function buildStage(){stage.className='stage '+bg;stage.innerHTML='';empty.style.display=layers.length?'none':'flex';layers.slice().sort((a,b)=>a.z-b.z).forEach(l=>{"
+          new="function buildStage(){stage.className='stage '+bg;stage.innerHTML='';var visible=layers.filter(l=>l.compId===activeComp);empty.style.display=visible.length?'none':'flex';visible.slice().sort((a,b)=>a.z-b.z).forEach(l=>{"
+          if old not in s: raise SystemExit('buildStage target missing')
+          s=s.replace(old,new,1)
+
+          old="layers.slice().sort((a,b)=>b.z-a.z).forEach(l=>{"
+          new="layers.filter(l=>l.compId===activeComp).slice().sort((a,b)=>b.z-a.z).forEach(l=>{"
+          if old not in s: raise SystemExit('renderLayers target missing')
+          s=s.replace(old,new,1)
+
+          start=s.index('function addFiles(files){')
+          end=s.index('input.onchange=',start)
+          newaf="function addFiles(files,asInsert){var added=[];files.forEach(file=>{if(!file.type||!file.type.startsWith('image/'))return;var comp=asInsert?(activeComp||uid()):uid();if(!activeComp)activeComp=comp;var a={id:uid(),compId:comp,isRoot:!asInsert,name:file.name,file,originalURL:URL.createObjectURL(file),cutoutURL:null,state:'Queued',processing:false,mask:null};assets.push(a);pending.push(a.id);var l=makeLayer(a,comp);added.push(l);if(!asInsert)activeComp=comp});if(added.length){selected=added[added.length-1].id;buildStage();status.textContent=asInsert?'Photo inserted into this composition.':'Batch added separately. Tap a thumbnail to edit only that photo.';setTimeout(runQueue,30)}};"
+          s=s[:start]+newaf+s[end:]
+
+          old="input.onchange=()=>{addFiles([...input.files]);input.value=''};insertInput.onchange=()=>{addFiles([...insertInput.files]);insertInput.value=''};"
+          new="input.onchange=()=>{addFiles([...input.files],false);input.value=''};insertInput.onchange=()=>{addFiles([...insertInput.files],true);insertInput.value=''};"
+          if old not in s: raise SystemExit('input handlers target missing')
+          s=s.replace(old,new,1)
+
+          s=s.replace("assets=[];layers=[];selected=null;buildStage();status.textContent='Cleared.'","assets=[];layers=[];selected=null;activeComp=null;buildStage();status.textContent='Cleared.'",1)
+          s=s.replace("n.z=layers.length;n.name=(l.name||'Layer')+' copy';n.locked=false;","n.z=layers.filter(x=>x.compId===activeComp).length;n.compId=activeComp;n.name=(l.name||'Layer')+' copy';n.locked=false;",1)
+          s=s.replace("layers.filter(x=>x.type==='image').forEach(x=>{x.adjust=JSON.parse(JSON.stringify(l.adjust));applyEl(x)})","layers.filter(x=>x.type==='image'&&x.compId===activeComp).forEach(x=>{x.adjust=JSON.parse(JSON.stringify(l.adjust));applyEl(x)})",1)
+          s=s.replace("for(var l of layers.slice().sort((a,b)=>a.z-b.z)){","for(var l of layers.filter(l=>l.compId===activeComp).slice().sort((a,b)=>a.z-b.z)){",1)
+
+          p.write_text(s)
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "PlantStudio Fix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Keep batch uploads separate and reserve Insert Photo for collage" || exit 0
+          git push origin main
