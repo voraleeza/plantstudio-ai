@@ -1,0 +1,35 @@
+name: Extract save snippet
+
+on:
+  push:
+    paths:
+      - '.github/workflows/extract-save.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Extract save code
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text()
+          needles=['saveBtn','function export','toBlob','navigator.share']
+          positions=[s.find(n) for n in needles if s.find(n)>=0]
+          start=max(0,min(positions)-3000) if positions else max(0,len(s)-12000)
+          end=min(len(s),max(positions)+10000) if positions else len(s)
+          Path('save-snippet.txt').write_text(s[start:end])
+          PY
+      - name: Commit snippet
+        run: |
+          git config user.name "PlantStudio Debug Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add save-snippet.txt
+          git commit -m "Extract PlantStudio save code for patching" || exit 0
+          git push origin main
