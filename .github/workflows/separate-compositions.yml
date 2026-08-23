@@ -1,4 +1,4 @@
-name: PlantStudio native resolution quality fix
+name: PlantStudio whole subject cutout fix
 
 on:
   push:
@@ -18,57 +18,27 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Preserve native photo resolution
+      - name: Restore whole subject segmentation
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
 
-          s=s.replace('HQ CUTOUT EDITOR','NATIVE HQ EDITOR',1)
+          s=s.replace('NATIVE HQ EDITOR','WHOLE SUBJECT EDITOR',1)
 
-          # Root batch photos represent the original photograph frame exactly.
-          old="function makeLayer(a,compId){var root=a.isRoot!==false;var l={id:uid(),type:'image',assetId:a.id,compId:compId||a.compId,name:a.name,x:.5,y:.5,w:root?.96:.68,h:root?.96:.68,scale:1,rot:0,opacity:1,shadow:0,z:layers.filter(x=>x.compId===(compId||a.compId)).length,adjust:defaults(),locked:false};layers.push(l);selected=l.id;return l}"
-          new="function makeLayer(a,compId){var root=a.isRoot!==false;var l={id:uid(),type:'image',assetId:a.id,compId:compId||a.compId,name:a.name,x:.5,y:.5,w:root?1:.68,h:root?1:.68,scale:1,rot:0,opacity:1,shadow:0,z:layers.filter(x=>x.compId===(compId||a.compId)).length,adjust:defaults(),locked:false};layers.push(l);selected=l.id;return l}"
-          if old not in s: raise SystemExit('root layer target missing')
-          s=s.replace(old,new,1)
-
-          # Store the native dimensions of each root photo after segmentation.
-          old="a.cutoutURL=URL.createObjectURL(blob);a.state='Cutout ready';a.mask=null;a.originalImg=null;await fitRootToAspect(a);buildStage()"
-          new="a.cutoutURL=URL.createObjectURL(blob);a.state='Cutout ready';a.mask=null;a.originalImg=null;if(a.isRoot&&!a.userResized){var nativeImg=await imgFrom(a.originalURL);a.canvasW=nativeImg.naturalWidth;a.canvasH=nativeImg.naturalHeight;if(activeComp===a.compId){canvasW=a.canvasW;canvasH=a.canvasH;wrap.style.aspectRatio=canvasW+'/'+canvasH}}buildStage()"
-          if old not in s: raise SystemExit('cutout completion target missing')
-          s=s.replace(old,new,1)
-
-          # Switching batch thumbnails switches to that photo's own canvas.
-          old="b.onclick=()=>{activeComp=a.compId;var l=layers.find(x=>x.assetId===a.id&&x.compId===activeComp);if(l){l.locked=false;selected=l.id}else selected=null;buildStage();status.textContent='Separate photo selected. Use Insert Photo only if you want a collage.'}"
-          new="b.onclick=()=>{activeComp=a.compId;if(a.canvasW&&a.canvasH){canvasW=a.canvasW;canvasH=a.canvasH;wrap.style.aspectRatio=canvasW+'/'+canvasH}var l=layers.find(x=>x.assetId===a.id&&x.compId===activeComp);if(l){l.locked=false;selected=l.id}else selected=null;buildStage();status.textContent='Separate photo selected. Use Insert Photo only if you want a collage.'}"
-          if old not in s: raise SystemExit('thumbnail switch target missing')
-          s=s.replace(old,new,1)
-
-          # Resize Canvas is now an explicit override for the active composition.
-          old="$('#resizeConfirm').onclick=()=>{var p=$('#canvasPreset').value.split(',');canvasW=+p[0];canvasH=+p[1];wrap.style.aspectRatio=canvasW+'/'+canvasH;$('#resizeModal').classList.remove('on')}"
-          new="$('#resizeConfirm').onclick=()=>{var p=$('#canvasPreset').value.split(',');canvasW=+p[0];canvasH=+p[1];var root=assets.find(a=>a.isRoot&&a.compId===activeComp);if(root){root.canvasW=canvasW;root.canvasH=canvasH;root.userResized=true}wrap.style.aspectRatio=canvasW+'/'+canvasH;$('#resizeModal').classList.remove('on')}"
-          if old not in s: raise SystemExit('resize target missing')
-          s=s.replace(old,new,1)
-
-          # Save All renders every composition at its own native resolution.
-          old="async function exportCompBlob(compId){var c=document.createElement('canvas');c.width=canvasW;c.height=canvasH;"
-          new="async function exportCompBlob(compId){var root=assets.find(a=>a.isRoot&&a.compId===compId),cw=root?.canvasW||canvasW,ch=root?.canvasH||canvasH;var c=document.createElement('canvas');c.width=cw;c.height=ch;"
-          if old not in s: raise SystemExit('batch export target missing')
-          s=s.replace(old,new,1)
-
-          # Save current also uses the active root photo's native dimensions.
-          old="$('#saveBtn').onclick=async()=>{if(!layers.length)return;loader.classList.add('on');loaderText.textContent='Rendering image…';try{var c=document.createElement('canvas');c.width=canvasW;c.height=canvasH;"
-          new="$('#saveBtn').onclick=async()=>{if(!layers.length)return;loader.classList.add('on');loaderText.textContent='Rendering image…';try{var root=assets.find(a=>a.isRoot&&a.compId===activeComp),cw=root?.canvasW||canvasW,ch=root?.canvasH||canvasH;var c=document.createElement('canvas');c.width=cw;c.height=ch;"
-          if old not in s: raise SystemExit('single export target missing')
+          old="var out;try{out=await fn(a.file,{model:'medium',device:'cpu',proxyToWorker:true,output:{format:'image/png',quality:1},progress:(k,c,t)=>{loaderText.textContent='Removing background…';if(t)progressBar.style.width=Math.max(8,Math.min(95,Math.round(c/t*100)))+'%'}})}catch(hqErr){console.warn('Medium cutout unavailable; falling back to small',hqErr);out=await fn(a.file,{model:'small',device:'cpu',proxyToWorker:true,output:{format:'image/png',quality:1},progress:(k,c,t)=>{loaderText.textContent='Removing background…';if(t)progressBar.style.width=Math.max(8,Math.min(95,Math.round(c/t*100)))+'%'}})}"
+          new="var out=await fn(a.file,{model:'small',device:'cpu',proxyToWorker:true,output:{format:'image/png',quality:1},progress:(k,c,t)=>{loaderText.textContent='Removing whole subject…';if(t)progressBar.style.width=Math.max(8,Math.min(95,Math.round(c/t*100)))+'%'}})"
+          if old not in s:
+              raise SystemExit('whole-subject cutout target missing')
           s=s.replace(old,new,1)
 
           p.write_text(s)
           PY
-      - name: Commit native-resolution fix
+      - name: Commit whole-subject cutout fix
         run: |
           git config user.name "PlantStudio Fix Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Preserve native resolution for batch cutouts" || exit 0
+          git commit -m "Restore whole subject cutout behavior" || exit 0
           git push origin main
