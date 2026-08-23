@@ -1,4 +1,4 @@
-name: PlantStudio whole subject cutout fix
+name: PlantStudio upload startup fix
 
 on:
   push:
@@ -18,27 +18,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Restore whole subject segmentation
+      - name: Fix upload startup syntax
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-
-          s=s.replace('NATIVE HQ EDITOR','WHOLE SUBJECT EDITOR',1)
-
-          old="var out;try{out=await fn(a.file,{model:'medium',device:'cpu',proxyToWorker:true,output:{format:'image/png',quality:1},progress:(k,c,t)=>{loaderText.textContent='Removing background…';if(t)progressBar.style.width=Math.max(8,Math.min(95,Math.round(c/t*100)))+'%'}})}catch(hqErr){console.warn('Medium cutout unavailable; falling back to small',hqErr);out=await fn(a.file,{model:'small',device:'cpu',proxyToWorker:true,output:{format:'image/png',quality:1},progress:(k,c,t)=>{loaderText.textContent='Removing background…';if(t)progressBar.style.width=Math.max(8,Math.min(95,Math.round(c/t*100)))+'%'}})}"
-          new="var out=await fn(a.file,{model:'small',device:'cpu',proxyToWorker:true,output:{format:'image/png',quality:1},progress:(k,c,t)=>{loaderText.textContent='Removing whole subject…';if(t)progressBar.style.width=Math.max(8,Math.min(95,Math.round(c/t*100)))+'%'}})"
+          old="+'%'}})if(g!==generation)return;"
+          new="+'%'}});if(g!==generation)return;"
           if old not in s:
-              raise SystemExit('whole-subject cutout target missing')
+              raise SystemExit('upload syntax target missing')
           s=s.replace(old,new,1)
-
           p.write_text(s)
           PY
-      - name: Commit whole-subject cutout fix
+      - name: Commit upload startup fix
         run: |
           git config user.name "PlantStudio Fix Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Restore whole subject cutout behavior" || exit 0
+          git commit -m "Fix photo upload startup syntax" || exit 0
           git push origin main
