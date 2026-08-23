@@ -1,4 +1,4 @@
-name: PlantStudio batch save patch
+name: PlantStudio Save All binding fix
 
 on:
   push:
@@ -18,65 +18,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Add Save All batch export
+      - name: Fix Save All binding
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          s=s.replace('SEPARATE BATCH EDITOR','BATCH SAVE EDITOR',1)
-          old='<button id="saveBtn" class="save">⇩ Save / Share</button>'
-          new='<button id="saveBtn" class="save">⇩ Save / Share</button><button id="saveAllBtn" class="save" style="background:#2f9d58">⇩ Save All Batch Photos</button>'
-          if old not in s: raise SystemExit('save button target missing')
-          s=s.replace(old,new,1)
-          js=r'''
-async function exportCompBlob(compId){
-  var c=document.createElement('canvas');c.width=canvasW;c.height=canvasH;var x=c.getContext('2d');
-  if(bg!=='clear'){x.fillStyle=bg==='black'?'#000':bg==='white'?'#fff':'#777';x.fillRect(0,0,c.width,c.height)}
-  for(var l of layers.filter(l=>l.compId===compId).slice().sort((a,b)=>a.z-b.z)){
-    x.save();x.globalAlpha=l.opacity;x.translate(l.x*c.width,l.y*c.height);x.rotate(l.rot*Math.PI/180);x.scale(l.scale,l.scale);
-    if(l.shadow){x.shadowColor='rgba(0,0,0,.65)';x.shadowBlur=l.shadow;x.shadowOffsetY=l.shadow/4}
-    if(l.type==='image'){var a=asset(l.assetId),im=await imgFrom(a.cutoutURL||a.originalURL),w=l.w*c.width,h=l.h*c.height;x.filter=filterFor(l);x.drawImage(im,-w/2,-h/2,w,h);x.filter='none'}
-    else{x.fillStyle=l.color;x.textAlign='center';x.textBaseline='middle';x.font='800 '+Math.round(l.fontSize*c.width/1080)+'px -apple-system,Arial';x.fillText(l.text,0,0,l.w*c.width)}
-    x.restore()
-  }
-  return await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('Export failed')),'image/png',1))
-}
-async function saveAllBatch(){
-  var roots=assets.filter(a=>a.isRoot&&a.cutoutURL),btn=$('#saveAllBtn');
-  if(!roots.length){status.textContent='No finished batch photos to save yet.';return}
-  var old=btn.textContent;btn.disabled=true;
-  try{
-    var files=[];
-    for(var i=0;i<roots.length;i++){
-      status.textContent='Preparing '+(i+1)+' of '+roots.length+'…';
-      var r=roots[i],blob=await exportCompBlob(r.compId),base=(r.name||('PlantStudio-'+(i+1))).replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/gi,'-');
-      files.push(new File([blob],base+'-edited.png',{type:'image/png'}));
-      await new Promise(q=>setTimeout(q,80))
-    }
-    if(navigator.share&&navigator.canShare?.({files:files})){
-      await navigator.share({files:files,title:'PlantStudio AI batch export'});status.textContent=files.length+' photos ready in Share / Save.'
-    }else{
-      for(var f of files){var u=URL.createObjectURL(f),a=document.createElement('a');a.href=u;a.download=f.name;a.click();setTimeout(()=>revoke(u),1800);await new Promise(q=>setTimeout(q,250))}
-      status.textContent='Save All downloads started.'
-    }
-  }catch(e){console.error(e);status.textContent=e?.name==='AbortError'?'Save All cancelled.':'Save All failed.'}
-  finally{btn.disabled=false;btn.textContent=old}
-}
-'''
-          end="$('#saveBtn').onclick=async()=>{"
-          pos=s.find(end)
-          if pos<0: raise SystemExit('save handler target missing')
-          s=s[:pos]+js+'\n'+s[pos:]
-          tail=';buildStage();setTimeout(()=>getAI().catch(()=>{}),900)})();'
-          if tail not in s: raise SystemExit('tail target missing')
-          s=s.replace(tail,";$('#saveAllBtn').onclick=saveAllBatch;buildStage();setTimeout(()=>getAI().catch(()=>{}),900)})();",1)
+          bad="$('#saveAllBtn').onclick=saveAllBatchbuildStage();"
+          good="$('#saveAllBtn').onclick=saveAllBatch;buildStage();"
+          if bad not in s:
+              raise SystemExit('bad Save All binding not found')
+          s=s.replace(bad,good,1)
           p.write_text(s)
           PY
-      - name: Commit app patch
+      - name: Commit binding fix
         run: |
           git config user.name "PlantStudio Fix Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Add Save All for batch compositions" || exit 0
+          git commit -m "Fix Save All button binding" || exit 0
           git push origin main
