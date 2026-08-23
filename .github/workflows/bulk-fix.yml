@@ -1,0 +1,47 @@
+name: Apply bulk processing fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/bulk-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Patch PlantStudio bulk memory handling
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          s = s.replace('LOCK + ADJUST FIX', 'BULK SAFE EDITOR')
+          old = "a.cutoutURL=URL.createObjectURL(blob);a.state='Cutout ready';await makeMask(a);buildStage()"
+          new = "a.cutoutURL=URL.createObjectURL(blob);a.state='Cutout ready';a.mask=null;a.originalImg=null;buildStage()"
+          if old not in s:
+              raise SystemExit('processAsset target not found')
+          s = s.replace(old, new, 1)
+          old2 = "async function openRefine(){var l=layer(selected);if(!l||l.type!=='image')return;var a=asset(l.assetId);if(!a?.mask){status.textContent='Wait for this cutout to finish first.';return}refineLayer=l;workMask=a.mask.slice();"
+          new2 = "async function openRefine(){var l=layer(selected);if(!l||l.type!=='image')return;var a=asset(l.assetId);if(!a||!a.cutoutURL){status.textContent='Wait for this cutout to finish first.';return}if(!a.mask){loader.classList.add('on');loaderText.textContent='Preparing Edit Cutout…';try{await makeMask(a)}catch(e){console.error(e);status.textContent='Could not prepare Edit Cutout.';return}finally{loader.classList.remove('on')}}refineLayer=l;workMask=a.mask.slice();"
+          if old2 not in s:
+              raise SystemExit('openRefine target not found')
+          s = s.replace(old2, new2, 1)
+          s = s.replace("await new Promise(r=>setTimeout(r,40))", "await new Promise(r=>setTimeout(r,140))", 1)
+          p.write_text(s)
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "PlantStudio Fix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix bulk cutout memory usage on iPhone" || exit 0
+          git push origin main
