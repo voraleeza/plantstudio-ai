@@ -1,0 +1,1 @@
+Exact historical clean-cutout reference based on commit 1630e4b3557757ee34855f8ccf38d8ff2fb3068f.
