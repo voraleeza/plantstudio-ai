@@ -1,0 +1,36 @@
+name: Extract save tail chunked
+
+on:
+  push:
+    paths:
+      - '.github/workflows/extract-save-tail.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Extract chunked save tail
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text()
+          n="$('#saveBtn').onclick"
+          i=s.find(n)
+          if i<0: raise SystemExit('save handler not found')
+          t=s[i:i+14000]
+          chunks=[t[j:j+500] for j in range(0,len(t),500)]
+          Path('save-tail-chunked.txt').write_text('\n'.join(chunks))
+          PY
+      - name: Commit snippet
+        run: |
+          git config user.name "PlantStudio Debug Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add save-tail-chunked.txt
+          git commit -m "Extract chunked save handler" || exit 0
+          git push origin main
