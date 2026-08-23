@@ -1,4 +1,4 @@
-name: Separate batch photos into compositions
+name: PlantStudio batch save patch
 
 on:
   push:
@@ -18,65 +18,65 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Patch separate batch compositions
+      - name: Add Save All batch export
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          s=s.replace('BULK SAFE EDITOR','SEPARATE BATCH EDITOR',1)
-
-          old="var assets=[],layers=[],selected=null,pending=[],queueRunning=false,generation=0,removeBackgroundFn=null,loadingAI=null,bg='black',canvasW=1080,canvasH=1350,pointers=new Map(),gesture=null;"
-          new="var assets=[],layers=[],selected=null,activeComp=null,pending=[],queueRunning=false,generation=0,removeBackgroundFn=null,loadingAI=null,bg='black',canvasW=1080,canvasH=1350,pointers=new Map(),gesture=null;"
-          if old not in s: raise SystemExit('globals target missing')
+          s=s.replace('SEPARATE BATCH EDITOR','BATCH SAVE EDITOR',1)
+          old='<button id="saveBtn" class="save">⇩ Save / Share</button>'
+          new='<button id="saveBtn" class="save">⇩ Save / Share</button><button id="saveAllBtn" class="save" style="background:#2f9d58">⇩ Save All Batch Photos</button>'
+          if old not in s: raise SystemExit('save button target missing')
           s=s.replace(old,new,1)
-
-          old="function makeLayer(a){var l={id:uid(),type:'image',assetId:a.id,name:a.name,x:.5,y:.5,w:.68,h:.68,scale:1,rot:0,opacity:1,shadow:0,z:layers.length,adjust:defaults(),locked:false};layers.push(l);selected=l.id;return l}"
-          new="function makeLayer(a,compId){var l={id:uid(),type:'image',assetId:a.id,compId:compId||a.compId,name:a.name,x:.5,y:.5,w:.68,h:.68,scale:1,rot:0,opacity:1,shadow:0,z:layers.filter(x=>x.compId===(compId||a.compId)).length,adjust:defaults(),locked:false};layers.push(l);selected=l.id;return l}"
-          if old not in s: raise SystemExit('makeLayer target missing')
-          s=s.replace(old,new,1)
-
-          old="function addText(t,c){var l={id:uid(),type:'text',name:'Text',text:t,color:c,x:.5,y:.5,w:.55,h:.15,scale:1,rot:0,opacity:1,shadow:0,z:layers.length,fontSize:72,locked:false};layers.push(l);selected=l.id;buildStage()}"
-          new="function addText(t,c){if(!activeComp)return;var l={id:uid(),type:'text',compId:activeComp,name:'Text',text:t,color:c,x:.5,y:.5,w:.55,h:.15,scale:1,rot:0,opacity:1,shadow:0,z:layers.filter(x=>x.compId===activeComp).length,fontSize:72,locked:false};layers.push(l);selected=l.id;buildStage()}"
-          if old not in s: raise SystemExit('addText target missing')
-          s=s.replace(old,new,1)
-
-          start=s.index('function renderQueue(){')
-          end=s.index('function elFor(l){',start)
-          newrq="function renderQueue(){queue.innerHTML='';assets.filter(a=>a.isRoot).forEach(a=>{var b=document.createElement('button');b.className='thumb'+(activeComp===a.compId?' active':'');var im=document.createElement('img');im.src=a.cutoutURL||a.originalURL;var sm=document.createElement('small');sm.textContent=a.state;b.append(im,sm);b.onclick=()=>{activeComp=a.compId;var l=layers.find(x=>x.assetId===a.id&&x.compId===activeComp);if(l){l.locked=false;selected=l.id}else selected=null;buildStage();status.textContent='Separate photo selected. Use Insert Photo only if you want a collage.'};queue.appendChild(b)})}"
-          s=s[:start]+newrq+s[end:]
-
-          old="function buildStage(){stage.className='stage '+bg;stage.innerHTML='';empty.style.display=layers.length?'none':'flex';layers.slice().sort((a,b)=>a.z-b.z).forEach(l=>{"
-          new="function buildStage(){stage.className='stage '+bg;stage.innerHTML='';var visible=layers.filter(l=>l.compId===activeComp);empty.style.display=visible.length?'none':'flex';visible.slice().sort((a,b)=>a.z-b.z).forEach(l=>{"
-          if old not in s: raise SystemExit('buildStage target missing')
-          s=s.replace(old,new,1)
-
-          old="layers.slice().sort((a,b)=>b.z-a.z).forEach(l=>{"
-          new="layers.filter(l=>l.compId===activeComp).slice().sort((a,b)=>b.z-a.z).forEach(l=>{"
-          if old not in s: raise SystemExit('renderLayers target missing')
-          s=s.replace(old,new,1)
-
-          start=s.index('function addFiles(files){')
-          end=s.index('input.onchange=',start)
-          newaf="function addFiles(files,asInsert){var added=[];files.forEach(file=>{if(!file.type||!file.type.startsWith('image/'))return;var comp=asInsert?(activeComp||uid()):uid();if(!activeComp)activeComp=comp;var a={id:uid(),compId:comp,isRoot:!asInsert,name:file.name,file,originalURL:URL.createObjectURL(file),cutoutURL:null,state:'Queued',processing:false,mask:null};assets.push(a);pending.push(a.id);var l=makeLayer(a,comp);added.push(l);if(!asInsert)activeComp=comp});if(added.length){selected=added[added.length-1].id;buildStage();status.textContent=asInsert?'Photo inserted into this composition.':'Batch added separately. Tap a thumbnail to edit only that photo.';setTimeout(runQueue,30)}};"
-          s=s[:start]+newaf+s[end:]
-
-          old="input.onchange=()=>{addFiles([...input.files]);input.value=''};insertInput.onchange=()=>{addFiles([...insertInput.files]);insertInput.value=''};"
-          new="input.onchange=()=>{addFiles([...input.files],false);input.value=''};insertInput.onchange=()=>{addFiles([...insertInput.files],true);insertInput.value=''};"
-          if old not in s: raise SystemExit('input handlers target missing')
-          s=s.replace(old,new,1)
-
-          s=s.replace("assets=[];layers=[];selected=null;buildStage();status.textContent='Cleared.'","assets=[];layers=[];selected=null;activeComp=null;buildStage();status.textContent='Cleared.'",1)
-          s=s.replace("n.z=layers.length;n.name=(l.name||'Layer')+' copy';n.locked=false;","n.z=layers.filter(x=>x.compId===activeComp).length;n.compId=activeComp;n.name=(l.name||'Layer')+' copy';n.locked=false;",1)
-          s=s.replace("layers.filter(x=>x.type==='image').forEach(x=>{x.adjust=JSON.parse(JSON.stringify(l.adjust));applyEl(x)})","layers.filter(x=>x.type==='image'&&x.compId===activeComp).forEach(x=>{x.adjust=JSON.parse(JSON.stringify(l.adjust));applyEl(x)})",1)
-          s=s.replace("for(var l of layers.slice().sort((a,b)=>a.z-b.z)){","for(var l of layers.filter(l=>l.compId===activeComp).slice().sort((a,b)=>a.z-b.z)){",1)
-
+          js=r'''
+async function exportCompBlob(compId){
+  var c=document.createElement('canvas');c.width=canvasW;c.height=canvasH;var x=c.getContext('2d');
+  if(bg!=='clear'){x.fillStyle=bg==='black'?'#000':bg==='white'?'#fff':'#777';x.fillRect(0,0,c.width,c.height)}
+  for(var l of layers.filter(l=>l.compId===compId).slice().sort((a,b)=>a.z-b.z)){
+    x.save();x.globalAlpha=l.opacity;x.translate(l.x*c.width,l.y*c.height);x.rotate(l.rot*Math.PI/180);x.scale(l.scale,l.scale);
+    if(l.shadow){x.shadowColor='rgba(0,0,0,.65)';x.shadowBlur=l.shadow;x.shadowOffsetY=l.shadow/4}
+    if(l.type==='image'){var a=asset(l.assetId),im=await imgFrom(a.cutoutURL||a.originalURL),w=l.w*c.width,h=l.h*c.height;x.filter=filterFor(l);x.drawImage(im,-w/2,-h/2,w,h);x.filter='none'}
+    else{x.fillStyle=l.color;x.textAlign='center';x.textBaseline='middle';x.font='800 '+Math.round(l.fontSize*c.width/1080)+'px -apple-system,Arial';x.fillText(l.text,0,0,l.w*c.width)}
+    x.restore()
+  }
+  return await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('Export failed')),'image/png',1))
+}
+async function saveAllBatch(){
+  var roots=assets.filter(a=>a.isRoot&&a.cutoutURL),btn=$('#saveAllBtn');
+  if(!roots.length){status.textContent='No finished batch photos to save yet.';return}
+  var old=btn.textContent;btn.disabled=true;
+  try{
+    var files=[];
+    for(var i=0;i<roots.length;i++){
+      status.textContent='Preparing '+(i+1)+' of '+roots.length+'…';
+      var r=roots[i],blob=await exportCompBlob(r.compId),base=(r.name||('PlantStudio-'+(i+1))).replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/gi,'-');
+      files.push(new File([blob],base+'-edited.png',{type:'image/png'}));
+      await new Promise(q=>setTimeout(q,80))
+    }
+    if(navigator.share&&navigator.canShare?.({files:files})){
+      await navigator.share({files:files,title:'PlantStudio AI batch export'});status.textContent=files.length+' photos ready in Share / Save.'
+    }else{
+      for(var f of files){var u=URL.createObjectURL(f),a=document.createElement('a');a.href=u;a.download=f.name;a.click();setTimeout(()=>revoke(u),1800);await new Promise(q=>setTimeout(q,250))}
+      status.textContent='Save All downloads started.'
+    }
+  }catch(e){console.error(e);status.textContent=e?.name==='AbortError'?'Save All cancelled.':'Save All failed.'}
+  finally{btn.disabled=false;btn.textContent=old}
+}
+'''
+          end="$('#saveBtn').onclick=async()=>{"
+          pos=s.find(end)
+          if pos<0: raise SystemExit('save handler target missing')
+          s=s[:pos]+js+'\n'+s[pos:]
+          tail=';buildStage();setTimeout(()=>getAI().catch(()=>{}),900)})();'
+          if tail not in s: raise SystemExit('tail target missing')
+          s=s.replace(tail,";$('#saveAllBtn').onclick=saveAllBatch;buildStage();setTimeout(()=>getAI().catch(()=>{}),900)})();",1)
           p.write_text(s)
           PY
-      - name: Commit fix
+      - name: Commit app patch
         run: |
           git config user.name "PlantStudio Fix Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Keep batch uploads separate and reserve Insert Photo for collage" || exit 0
+          git commit -m "Add Save All for batch compositions" || exit 0
           git push origin main
