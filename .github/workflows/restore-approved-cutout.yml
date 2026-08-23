@@ -1,0 +1,85 @@
+name: Restore approved LOCK + ADJUST cutout engine
+
+on:
+  push:
+    paths:
+      - '.github/workflows/restore-approved-cutout.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Restore exact approved cutout functions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          APPROVED='9d0456f5cc0342e366a9560969b14a92ff9b0798'
+          p=Path('index.html')
+          cur=p.read_text()
+          old=subprocess.check_output(['git','show',f'{APPROVED}:index.html'], text=True)
+
+          def extract_function(src, signature):
+              start=src.find(signature)
+              if start < 0:
+                  raise SystemExit(f'Missing {signature} in approved source')
+              brace=src.find('{', start)
+              if brace < 0:
+                  raise SystemExit(f'No opening brace for {signature}')
+              depth=0
+              quote=None
+              escape=False
+              i=brace
+              while i < len(src):
+                  ch=src[i]
+                  if quote:
+                      if escape:
+                          escape=False
+                      elif ch=='\\':
+                          escape=True
+                      elif ch==quote:
+                          quote=None
+                  else:
+                      if ch in ('\"', "'", '`'):
+                          quote=ch
+                      elif ch=='{':
+                          depth+=1
+                      elif ch=='}':
+                          depth-=1
+                          if depth==0:
+                              return src[start:i+1]
+                  i+=1
+              raise SystemExit(f'Unclosed function {signature}')
+
+          def replace_function(dst, signature, replacement):
+              existing=extract_function(dst, signature)
+              if existing == replacement:
+                  return dst
+              return dst.replace(existing, replacement, 1)
+
+          for sig in ('async function getAI()', 'async function processAsset(a,g)'):
+              approved_fn=extract_function(old, sig)
+              cur=replace_function(cur, sig, approved_fn)
+
+          # Mark this as the known-good cutout restoration without changing UI architecture.
+          cur=cur.replace('BATCH SAVE EDITOR','APPROVED CLEAN CUTOUT',1)
+          p.write_text(cur)
+          PY
+      - name: Commit restored approved cutout
+        run: |
+          git config user.name "PlantStudio Fix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Restore exact approved LOCK + ADJUST cutout engine" || exit 0
+          git push origin main
