@@ -7,15 +7,15 @@ import os from 'node:os';
 
 export const config = { maxDuration: 300 };
 
-const MODEL_URL = 'https://huggingface.co/onnx-community/BEN2-ONNX/resolve/main/onnx/model_fp16.onnx';
-const MODEL_PATH = path.join(os.tmpdir(), 'ben2-model-fp16.onnx');
+const MODEL_URL = 'https://huggingface.co/SacredNoir/isnet-general-use-onnx/resolve/main/isnet-general-use-q8.onnx';
+const MODEL_PATH = path.join(os.tmpdir(), 'isnet-general-use-q8.onnx');
 const S = 1024;
 let sessionPromise = null;
 
 async function ensureModelFile() {
   try {
     const st = await fs.stat(MODEL_PATH);
-    if (st.size > 100_000_000) return MODEL_PATH;
+    if (st.size > 40_000_000) return MODEL_PATH;
   } catch {}
   const r = await fetch(MODEL_URL);
   if (!r.ok) throw new Error(`Model download failed (${r.status})`);
@@ -60,13 +60,11 @@ function resizeToSquareRGBA(src, sw, sh, size) {
 function makeInput(rgba) {
   const n = S * S;
   const data = new Float32Array(3 * n);
-  const mean = [0.485, 0.456, 0.406];
-  const std = [0.229, 0.224, 0.225];
   for (let i = 0; i < n; i++) {
     const p = i * 4;
-    data[i] = (rgba[p] / 255 - mean[0]) / std[0];
-    data[n + i] = (rgba[p + 1] / 255 - mean[1]) / std[1];
-    data[2 * n + i] = (rgba[p + 2] / 255 - mean[2]) / std[2];
+    data[i] = (rgba[p] - 128) / 256;
+    data[n + i] = (rgba[p + 1] - 128) / 256;
+    data[2 * n + i] = (rgba[p + 2] - 128) / 256;
   }
   return new ort.Tensor('float32', data, [1, 3, S, S]);
 }
@@ -113,6 +111,7 @@ async function removeBackground(buffer) {
   for (let i = 0; i < count; i++) {
     let v = Number(raw[offset + i]);
     if (min < 0 || max > 1) v = sigmoid(v);
+    if (max > min && min >= 0 && max <= 1) v = (v - min) / (max - min);
     mask[i] = Math.max(0, Math.min(1, v));
   }
 
@@ -132,7 +131,7 @@ async function removeBackground(buffer) {
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
-    return res.status(200).json({ ok: true, engine: 'BEN2 native CPU server', ready: true });
+    return res.status(200).json({ ok: true, engine: 'IS-Net Q8 native CPU server', ready: true });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
@@ -148,7 +147,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).send(png);
   } catch (error) {
-    console.error('BEN2 native server remover failed:', error);
+    console.error('IS-Net native server remover failed:', error);
     return res.status(500).json({ error: error?.message || 'Background removal failed' });
   }
 }
