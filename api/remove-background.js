@@ -22,9 +22,31 @@ async function getSegmenter() {
   return segmenterPromise;
 }
 
+async function removeRawImage(input) {
+  const segmenter = await getSegmenter();
+  const output = await segmenter(input);
+  const result = Array.isArray(output) ? output[0] : output;
+  if (!result) throw new Error('No image returned by remover');
+  return result;
+}
+
 export default async function handler(req, res) {
   if (req.method === 'GET') {
-    return res.status(200).json({ ok: true, engine: 'BEN2 server', ready: true });
+    if (req.query?.test !== '1') {
+      return res.status(200).json({ ok: true, engine: 'BEN2 server', ready: true });
+    }
+    try {
+      const sample = await RawImage.fromURL('https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/woman-with-afro_medium.jpg');
+      const result = await removeRawImage(sample);
+      const outPath = path.join(os.tmpdir(), `plantstudio-selftest-${Date.now()}.png`);
+      await result.save(outPath);
+      const png = await fs.readFile(outPath);
+      await fs.unlink(outPath).catch(() => {});
+      return res.status(200).json({ ok: true, engine: 'BEN2 server', inference: true, pngBytes: png.length, width: result.width, height: result.height });
+    } catch (error) {
+      console.error('BEN2 self-test failed:', error);
+      return res.status(500).json({ ok: false, error: error?.message || 'Self-test failed' });
+    }
   }
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'POST only' });
@@ -41,10 +63,7 @@ export default async function handler(req, res) {
     if (!buffer.length) return res.status(400).json({ error: 'Empty image' });
 
     const input = await RawImage.fromBlob(new Blob([buffer], { type: mimeType }));
-    const segmenter = await getSegmenter();
-    const output = await segmenter(input);
-    const result = Array.isArray(output) ? output[0] : output;
-    if (!result) throw new Error('No image returned by remover');
+    const result = await removeRawImage(input);
 
     const outPath = path.join(os.tmpdir(), `plantstudio-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
     await result.save(outPath);
