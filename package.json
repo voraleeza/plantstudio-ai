@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@huggingface/transformers": "^3.8.1"
+    "jpeg-js": "^0.4.4",
+    "onnxruntime-web": "^1.22.0",
+    "pngjs": "^7.0.0"
   }
 }
