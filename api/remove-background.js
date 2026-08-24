@@ -1,4 +1,4 @@
-import * as ort from 'onnxruntime-web';
+import * as ort from 'onnxruntime-node';
 import jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
 import fs from 'node:fs/promises';
@@ -11,9 +11,6 @@ const MODEL_URL = 'https://huggingface.co/onnx-community/BEN2-ONNX/resolve/main/
 const MODEL_PATH = path.join(os.tmpdir(), 'ben2-model-fp16.onnx');
 const S = 1024;
 let sessionPromise = null;
-
-ort.env.wasm.numThreads = 1;
-ort.env.wasm.simd = true;
 
 async function ensureModelFile() {
   try {
@@ -31,9 +28,8 @@ async function getSession() {
   if (!sessionPromise) {
     sessionPromise = (async () => {
       const p = await ensureModelFile();
-      const bytes = await fs.readFile(p);
-      return ort.InferenceSession.create(bytes, {
-        executionProviders: ['wasm'],
+      return ort.InferenceSession.create(p, {
+        executionProviders: ['cpu'],
         graphOptimizationLevel: 'all'
       });
     })().catch((e) => {
@@ -47,9 +43,9 @@ async function getSession() {
 function resizeToSquareRGBA(src, sw, sh, size) {
   const out = new Uint8Array(size * size * 4);
   for (let y = 0; y < size; y++) {
-    const sy = Math.min(sh - 1, Math.round((y + 0.5) * sh / size - 0.5));
+    const sy = Math.min(sh - 1, Math.max(0, Math.round((y + 0.5) * sh / size - 0.5)));
     for (let x = 0; x < size; x++) {
-      const sx = Math.min(sw - 1, Math.round((x + 0.5) * sw / size - 0.5));
+      const sx = Math.min(sw - 1, Math.max(0, Math.round((x + 0.5) * sw / size - 0.5)));
       const si = (sy * sw + sx) * 4;
       const di = (y * size + x) * 4;
       out[di] = src[si];
@@ -136,7 +132,7 @@ async function removeBackground(buffer) {
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
-    return res.status(200).json({ ok: true, engine: 'BEN2 WASM server', ready: true });
+    return res.status(200).json({ ok: true, engine: 'BEN2 native CPU server', ready: true });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
@@ -152,7 +148,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).send(png);
   } catch (error) {
-    console.error('BEN2 WASM server remover failed:', error);
+    console.error('BEN2 native server remover failed:', error);
     return res.status(500).json({ error: error?.message || 'Background removal failed' });
   }
 }
