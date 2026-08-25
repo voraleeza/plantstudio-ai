@@ -1,63 +1,19 @@
-export const config = { maxDuration: 300 };
-
-export default async function handler(req, res) {
-  const base = process.env.PLANTSTUDIO_INFERENCE_URL;
-
-  if (req.method === 'GET') {
-    return res.status(200).json({
-      ok: true,
-      engine: 'Dedicated BiRefNet inference service',
-      configured: Boolean(base),
-    });
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'POST only' });
-  }
-
-  if (!base) {
-    return res.status(503).json({
-      error: 'Dedicated inference service is not connected yet. Set PLANTSTUDIO_INFERENCE_URL in Vercel.',
-    });
-  }
-
-  try {
-    const { image } = req.body || {};
-    if (!image || typeof image !== 'string') {
-      return res.status(400).json({ error: 'Missing image data' });
-    }
-
-    const base64 = image.includes(',') ? image.split(',').pop() : image;
-    const buffer = Buffer.from(base64, 'base64');
-    if (!buffer.length) {
-      return res.status(400).json({ error: 'Empty image' });
-    }
-
-    const form = new FormData();
-    form.append('file', new Blob([buffer], { type: 'image/jpeg' }), 'plantstudio-upload.jpg');
-
-    const target = `${base.replace(/\/$/, '')}/remove-background`;
-    const upstream = await fetch(target, { method: 'POST', body: form });
-
-    if (!upstream.ok) {
-      let detail = '';
-      try {
-        const data = await upstream.json();
-        detail = data?.detail || data?.error || '';
-      } catch {
-        try { detail = await upstream.text(); } catch {}
-      }
-      return res.status(502).json({
-        error: detail ? `Inference service failed: ${detail}` : `Inference service returned ${upstream.status}`,
-      });
-    }
-
-    const png = Buffer.from(await upstream.arrayBuffer());
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).send(png);
-  } catch (error) {
-    console.error('Dedicated inference proxy failed:', error);
-    return res.status(502).json({ error: error?.message || 'Inference service connection failed' });
-  }
-}
+import * as ort from 'onnxruntime-node';
+import jpeg from 'jpeg-js';
+import { PNG } from 'pngjs';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+export const config={maxDuration:300};
+const MODEL_URL='https://huggingface.co/SacredNoir/isnet-general-use-onnx/resolve/main/isnet-general-use-q8.onnx';
+const MODEL_PATH=path.join(os.tmpdir(),'isnet-general-use-q8.onnx');const S=1024;let sessionPromise=null;
+async function ensureModelFile(){try{const st=await fs.stat(MODEL_PATH);if(st.size>40000000)return MODEL_PATH}catch{}const r=await fetch(MODEL_URL);if(!r.ok)throw new Error(`Model download failed (${r.status})`);await fs.writeFile(MODEL_PATH,Buffer.from(await r.arrayBuffer()));return MODEL_PATH}
+async function getSession(){if(!sessionPromise)sessionPromise=(async()=>ort.InferenceSession.create(await ensureModelFile(),{executionProviders:['cpu'],graphOptimizationLevel:'all',intraOpNumThreads:1,interOpNumThreads:1}))().catch(e=>{sessionPromise=null;throw e});return sessionPromise}
+function resize(src,sw,sh,size){const out=new Uint8Array(size*size*4);for(let y=0;y<size;y++){const sy=Math.min(sh-1,Math.max(0,Math.round((y+.5)*sh/size-.5)));for(let x=0;x<size;x++){const sx=Math.min(sw-1,Math.max(0,Math.round((x+.5)*sw/size-.5))),si=(sy*sw+sx)*4,di=(y*size+x)*4;out[di]=src[si];out[di+1]=src[si+1];out[di+2]=src[si+2];out[di+3]=255}}return out}
+function input(rgba){const n=S*S,d=new Float32Array(3*n);for(let i=0;i<n;i++){const p=i*4;d[i]=(rgba[p]-128)/256;d[n+i]=(rgba[p+1]-128)/256;d[2*n+i]=(rgba[p+2]-128)/256}return new ort.Tensor('float32',d,[1,3,S,S])}
+function sigmoid(v){return 1/(1+Math.exp(-v))}function sample(m,mw,mh,x,y,ow,oh){const fx=Math.max(0,Math.min(mw-1,(x+.5)*mw/ow-.5)),fy=Math.max(0,Math.min(mh-1,(y+.5)*mh/oh-.5)),x0=Math.floor(fx),y0=Math.floor(fy),x1=Math.min(mw-1,x0+1),y1=Math.min(mh-1,y0+1),dx=fx-x0,dy=fy-y0,a=m[y0*mw+x0]*(1-dx)+m[y0*mw+x1]*dx,b=m[y1*mw+x0]*(1-dx)+m[y1*mw+x1]*dx;return a*(1-dy)+b*dy}
+async function removeBackground(buffer){const dec=jpeg.decode(buffer,{useTArray:true,formatAsRGBA:true});if(!dec?.data?.length)throw new Error('Could not decode JPEG upload');const session=await getSession(),feeds={[session.inputNames[0]]:input(resize(dec.data,dec.width,dec.height,S))},outs=await session.run(feeds),out=outs[session.outputNames[0]];if(!out?.data?.length)throw new Error('No segmentation mask returned');const dims=out.dims||[1,1,S,S],mh=dims[dims.length-2]||S,mw=dims[dims.length-1]||S,count=mw*mh,off=Math.max(0,out.data.length-count),mask=new Float32Array(count);let min=Infinity,max=-Infinity;for(let i=0;i<count;i++){const v=Number(out.data[off+i]);if(v<min)min=v;if(v>max)max=v}for(let i=0;i<count;i++){let v=Number(out.data[off+i]);if(min<0||max>1)v=sigmoid(v);if(max>min&&min>=0&&max<=1)v=(v-min)/(max-min);mask[i]=Math.max(0,Math.min(1,v))}
+// Preserve uncertain peripheral foreground instead of aggressively clipping it: expand only around pixels the model already considers plausibly foreground.
+const expanded=new Float32Array(mask);for(let y=1;y<mh-1;y++)for(let x=1;x<mw-1;x++){const i=y*mw+x;if(mask[i]>=.18)continue;let near=0;for(let yy=-1;yy<=1;yy++)for(let xx=-1;xx<=1;xx++)near=Math.max(near,mask[(y+yy)*mw+x+xx]);if(near>.42)expanded[i]=Math.max(mask[i],near*.72)}
+const png=new PNG({width:dec.width,height:dec.height});for(let y=0;y<dec.height;y++)for(let x=0;x<dec.width;x++){const i=(y*dec.width+x)*4;png.data[i]=dec.data[i];png.data[i+1]=dec.data[i+1];png.data[i+2]=dec.data[i+2];let a=sample(expanded,mw,mh,x,y,dec.width,dec.height);a=Math.max(0,Math.min(1,(a-.04)/.90));png.data[i+3]=Math.round(a*255)}return PNG.sync.write(png)}
+export default async function handler(req,res){if(req.method==='GET')return res.status(200).json({ok:true,engine:'Foreground-preserving IS-Net local server',ready:true});if(req.method!=='POST')return res.status(405).json({error:'POST only'});try{const{image}=req.body||{};if(!image||typeof image!=='string')return res.status(400).json({error:'Missing image data'});const b=Buffer.from(image.includes(',')?image.split(',').pop():image,'base64');if(!b.length)return res.status(400).json({error:'Empty image'});const png=await removeBackground(b);res.setHeader('Content-Type','image/png');res.setHeader('Cache-Control','no-store');return res.status(200).send(png)}catch(e){console.error('Foreground remover failed:',e);return res.status(500).json({error:e?.message||'Background removal failed'})}}
