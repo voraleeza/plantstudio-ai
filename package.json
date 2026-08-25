@@ -1,6 +1,8 @@
 {
-  "name": "plantstudio-ai",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module"
+  "name":"plantstudio-ai",
+  "version":"1.0.0",
+  "private":true,
+  "type":"module",
+  "dependencies":{"jpeg-js":"^0.4.4","onnxruntime-node":"^1.22.0","pngjs":"^7.0.0"},
+  "allowScripts":{"onnxruntime-node":true}
 }
