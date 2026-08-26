@@ -1,0 +1,32 @@
+name: Apply Photo Copy Perfect Remover
+
+on:
+  push:
+    branches: [photo-copy]
+    paths:
+      - '.github/workflows/apply-photo-copy-perfect-remover.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: photo-copy
+      - name: Patch only remover wiring
+        run: python .github/scripts/patch_photo_copy_server_remover.py
+      - name: Commit patched editor
+        run: |
+          git config user.name "PlantStudio Fix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No index change needed"
+          else
+            git commit -m "Wire approved Perfect Background Remover into locked Photo Copy editor"
+            git push origin HEAD:photo-copy
+          fi
